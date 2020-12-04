@@ -3,8 +3,115 @@
 # Author : original author Elecrow
 
 ###############################################################################
+# DATA Definition                                                             #
+###############################################################################
+gpio_pins = [
+    #PH  GP  GR  DESC          PH  GP  GR  DESC        # Always ON
+    [ 1, -1, -1, '3V3'],      [ 2, -1, -1, '5V'],      # * *
+    [ 3, -1,  2, 'SDA1'],     [ 4, -1, -1, '5V'],      #   *
+    [ 5, -1,  3, 'SCL1'],     [ 6, -1, -1, 'GND'],
+    [ 7, -1,  4, '1Wire'],    [ 8, -1, 14, 'TxD'],
+    [ 9, -1, -1, 'GND'],      [10, -1, 15, 'RxD'],
+    [11,  0, 17, 'Touch'],    [12,  1, 18, 'Buzzer'],
+    [13,  2, 27, 'Vib'],      [14, -1, -1, 'GND'],
+    [15,  3, 22, 'Tilt'],     [16,  4, 23, 'Motion?'], # * *blink
+    [17, -1, -1, '3V3'],      [18,  5, 24, 'Sound'],   # *
+    [19, -1, 10, 'MOSI'],     [20, -1, -1, 'GND'],
+    [21, -1,  9, 'MISO'],     [22,  6, 25, 'Servo-M'],
+    [23, -1, 11, 'SCLK'],     [24, -1,  8, 'CE0'],
+    [25, -1, -1, 'GND'],      [26, -1,  7, 'CE1'],
+    [27, -1,  0, 'SDA0'],     [28, -1,  1, 'SCL0'],    # *
+    [29, 21,  5, 'Step-M-1'], [30, -1, -1, 'GND'],
+    [31, 22,  6, 'Step-M-2'], [32, 26, 12, 'RGB Matrix'],
+    [33, 23, 13, 'Step-M-3'], [34, -1, -1, 'GND'],
+    [35, 24, 19, 'Step-M-4'], [36, 27, 16, 'Ultrasonic-TRIG'],
+    [37, 25, 26, 'Uls-ECHO'], [38, 28, 20, 'IR'],
+    [39, -1, -1, 'GND'],      [40, 29, 21, 'Relay'],
+]
+
+###############################################################################
 # INPUT                                                                       #
 ###############################################################################
+
+# /usr/share/code/project/Calculator/Calculator.py
+class ButtonMatrix():
+# Author : original author stenobot
+# Original Author Github: https://github.com/stenobot/SoundMatrixPi
+
+    def __init__(self):
+        import RPi.GPIO as GPIO
+        import time
+        import spidev
+
+        # Open SPI bus
+        self.spi = spidev.SpiDev()
+        self.spi.open(0,1)
+        self.spi.max_speed_hz=1000000
+
+        GPIO.setmode(GPIO.BCM)
+
+        # Define key channels
+        self.key_channel = 4
+        self.delay = 0.1
+
+        self.adc_key_val = [30,90,160,230,280,330,400,470,530,590,650,720,780,840,890,960]
+        self.key = -1
+        self.oldkey = -1
+        self.num_keys = 16
+
+        self.indexes = {
+            12:7, 13:8,  14:9,  15:'x',
+             8:4,  9:5,  10:6,  11:'/',
+             4:1,  5:2,   6:3,   7:'+',
+             0:0,  1:'#', 2:'=', 3:'-'
+        }
+
+    def ReadChannel(self,channel):
+        # Function to read SPI data from MCP3008 chip
+        # Channel must be an integer 0-7
+        adc = self.spi.xfer2([1,(8+channel)<<4,0])
+        data = ((adc[1]&3) << 8) + adc[2]
+        return data
+    
+    def GetAdcValue(self):
+        adc_key_value = self.ReadChannel(self.key_channel)
+        return adc_key_value
+
+    def GetKeyNum(self,adc_key_value):
+        for num in range(0,16):
+            if adc_key_value < self.adc_key_val[num]:
+                return num
+        if adc_key_value >= self.num_keys:
+            num = -1
+            return num
+
+    def activateButton(self, btnIndex):
+        # get the index from SPI
+        btnIndex = int(btnIndex)
+        # correct the index to better format
+        btnIndex = self.indexes[btnIndex]
+        print("button %s pressed" % btnIndex)
+        # prevent button presses too close together
+        time.sleep(.3)
+
+    def main(self):
+        try:
+            while True:
+                # get buttons press from SPI
+                self.adc_key_value = self.GetAdcValue()
+                self.key = self.GetKeyNum(self.adc_key_value)
+                if self.key != self.oldkey:
+                    time.sleep(0.05)
+                    self.adc_key_value = self.GetAdcValue()
+                    self.key = self.GetKeyNum(self.adc_key_value)
+                    if self.key != self.oldkey:
+                        self.oldkey = self.key
+                        if self.key >= 0:
+                            # button pressed, activate it
+                            self.activateButton(self.key)
+                time.sleep(self.delay)
+        except KeyboardInterrupt:
+            GPIO.cleanup()
 
 # touch.py
 class TouchSensor():
@@ -17,10 +124,8 @@ class TouchSensor():
 
         # define touch pin
         touch_pin = 17
-
-        # set board mode to GPIO.BOARD
+        # set board mode to GPIO.BCM
         GPIO.setmode(GPIO.BCM)
-
         # set GPIO pin to INPUT
         GPIO.setup(touch_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
@@ -100,11 +205,10 @@ class GPIOLed():
         import RPi.GPIO as GPIO
 
         # define LED pin
-        led_pin = 26 # 27 motor?
-
-        # set GPIO mode to GPIO.BOARD
+        led_pin = 26
+        # set GPIO mode to GPIO.BCM
         GPIO.setmode(GPIO.BCM)
-        # set puin as input
+        # set pin as OUTPUT
         GPIO.setup(led_pin, GPIO.OUT)
 
         try:
@@ -117,6 +221,57 @@ class GPIOLed():
                 GPIO.output(led_pin, GPIO.LOW)
                 # Wait half a second
                 time.sleep(0.2)
+        except KeyboardInterrupt:
+            # CTRL+C detected, cleaning and quitting the script
+            GPIO.cleanup()
+
+# BUG: i2c timeout after this test. AT YOUR OWN RISK!
+class GPIOLed_DONOT_USE():
+
+    def __init__(self):
+        import time
+        import RPi.GPIO as GPIO
+
+        GPIO.setmode(GPIO.BOARD)    
+
+        for pins in range(len(gpio_pins)):
+            pin = gpio_pins[pins]
+            # TODO: more need skip pins!
+            if pin[3] == '3V3' or pin[3] == '5V' or pin[3] == 'GND' or pin[3] == 'SDA0' or pin[3] == 'SCL0':
+                pass
+            else:
+                GPIO.setup(pin[0], GPIO.OUT)
+
+        try:
+            while True:
+                for pins in range(len(gpio_pins)/2):
+                    pin_o = gpio_pins[pins * 2]
+                    pin_e = gpio_pins[pins * 2 + 1]
+
+                    if pin_o[3] == '3V3' or pin_o[3] == '5V' or pin_o[3] == 'GND' or pin_o[3] == 'SDA0':
+                        pin_o = -1
+                    if pin_e[3] == '3V3' or pin_e[3] == '5V' or pin_e[3] == 'GND' or pin_e[3] == 'SCL0':
+                        pin_e = -1
+
+                    if pin_o == -1 and pin_e == -1:
+                        continue
+
+                    # turn on LED
+                    if pin_o != -1:
+                        GPIO.output(pin_o[0], GPIO.HIGH)
+                    if pin_e != -1:
+                        GPIO.output(pin_e[0], GPIO.HIGH)
+                    # Wait half a second
+                    time.sleep(0.2)
+
+                    # turn off LED
+                    if pin_o != -1:
+                        GPIO.output(pin_o[0], GPIO.LOW)
+                    if pin_e != -1:
+                        GPIO.output(pin_e[0], GPIO.LOW)
+                    # Wait half a second
+                    time.sleep(0.2)
+
         except KeyboardInterrupt:
             # CTRL+C detected, cleaning and quitting the script
             GPIO.cleanup()
@@ -263,10 +418,9 @@ class Tilt():
 
         # define tilt pin
         tilt_pin = 22
-
-        # set GPIO mode to GPIO.BOARD
+        # set GPIO mode to GPIO.BCM
         GPIO.setmode(GPIO.BCM)
-        # set puin as input
+        # set puin as INPUT
         GPIO.setup(tilt_pin, GPIO.IN)
 
         try:
@@ -291,8 +445,7 @@ class Motion():
 
         # define motion pin
         motion_pin = 23
-
-        # set GPIO as GPIO.BOARD
+        # set GPIO as GPIO.BCM
         GPIO.setmode(GPIO.BCM)
         # set pin mode as INPUT
         GPIO.setup(motion_pin, GPIO.IN)
@@ -406,7 +559,7 @@ class Ultrasonic():
         GPIO.setmode(GPIO.BCM)
 
         TRIG = 16
-        ECHO = 26 # 12
+        ECHO = 26 # CrowPi1 12
 
         print("Distance Measurement In Progress")
 
@@ -436,10 +589,6 @@ class Ultrasonic():
         GPIO.cleanup()
 
 ###############################################################################
-# Interface                                                                   #
-###############################################################################
-
-###############################################################################
 # Hardware                                                                    #
 ###############################################################################
 
@@ -452,8 +601,7 @@ class Relay():
 
         # define relay pin
         relay_pin = 21
-
-        # set GPIO mode as GPIO.BOARD
+        # set GPIO mode as GPIO.BCM
         GPIO.setmode(GPIO.BCM)
         # setup relay pin as OUTPUT
         GPIO.setup(relay_pin, GPIO.OUT)
@@ -479,7 +627,6 @@ class Buzzer():
         import time
 
         buzzer_pin = 18
-
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(buzzer_pin, GPIO.OUT)
 
@@ -499,12 +646,10 @@ class TouchButtonAndBuzzer():
         import RPi.GPIO as GPIO
 
         # configure both button and buzzer pins
-        button_pin = 17 # 26 PIN assign changed by 1 to 2?
+        button_pin = 17 # CrowPi1 26
         buzzer_pin = 18
-
-        # set board mode to GPIO.BOARD
+        # set board mode to GPIO.BCM
         GPIO.setmode(GPIO.BCM)
-
         # setup button pin asBu input and buzzer pin as output
         GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.setup(buzzer_pin, GPIO.OUT)
@@ -530,10 +675,8 @@ class Vibration():
 
         # define vibration pin
         vibration_pin = 27
-
-        # Set board mode to GPIO.BOARD
+        # Set board mode to GPIO.BCM
         GPIO.setmode(GPIO.BCM)
-
         # Setup vibration pin to OUTPUT
         GPIO.setup(vibration_pin, GPIO.OUT)
 
@@ -550,6 +693,251 @@ class Vibration():
         GPIO.cleanup()
 
 ###############################################################################
+# Interface                                                                   #
+###############################################################################
+
+import time
+import RPi.GPIO as GPIO
+import math
+
+# stepmotor.py
+class ServoMotor():
+# Author : Original author ludwigschuster
+# Original Author Github: https://github.com/ludwigschuster/RasPi-GPIO-Stepmotor
+
+    def __init__(self):
+#        import time
+#        import RPi.GPIO as GPIO
+#        import math
+
+		# set GPIO mode
+        GPIO.setmode(GPIO.BCM)
+        # These are the pins which will be used on the Raspberry Pi
+        self.pin_A = 5
+        self.pin_B = 6
+        self.pin_C = 13
+        self.pin_D = 19
+        self.interval = 0.010
+
+        # Declare pins as output
+        GPIO.setup(self.pin_A,GPIO.OUT)
+        GPIO.setup(self.pin_B,GPIO.OUT)
+        GPIO.setup(self.pin_C,GPIO.OUT)
+        GPIO.setup(self.pin_D,GPIO.OUT)
+        GPIO.output(self.pin_A, False)
+        GPIO.output(self.pin_B, False)
+        GPIO.output(self.pin_C, False)
+        GPIO.output(self.pin_D, False)
+
+    def Step1(self):
+        GPIO.output(self.pin_D, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_D, False)
+
+    def Step2(self):
+        GPIO.output(self.pin_D, True)
+        GPIO.output(self.pin_C, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_D, False)
+        GPIO.output(self.pin_C, False)
+
+    def Step3(self):
+        GPIO.output(self.pin_C, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_C, False)
+
+    def Step4(self):
+        GPIO.output(self.pin_B, True)
+        GPIO.output(self.pin_C, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_B, False)
+        GPIO.output(self.pin_C, False)
+
+    def Step5(self):
+        GPIO.output(self.pin_B, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_B, False)
+
+    def Step6(self):
+        GPIO.output(self.pin_A, True)
+        GPIO.output(self.pin_B, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_A, False)
+        GPIO.output(self.pin_B, False)
+
+    def Step7(self):
+        GPIO.output(self.pin_A, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_A, False)
+
+    def Step8(self):
+        GPIO.output(self.pin_D, True)
+        GPIO.output(self.pin_A, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_D, False)
+        GPIO.output(self.pin_A, False)
+
+    def turn(self,count):
+        for i in range (int(count)):
+            self.Step1()
+            self.Step2()
+            self.Step3()
+            self.Step4()
+            self.Step5()
+            self.Step6()
+            self.Step7()
+            self.Step8()
+
+    def close(self):
+        # cleanup the GPIO pin use
+        GPIO.cleanup()
+
+    def turnSteps(self, count):
+        # Turn n steps
+        # (supply with number of steps to turn)
+        for i in range (count):
+            self.turn(1)
+
+    def turnDegrees(self, count):
+        # Turn n degrees (small values can lead to inaccuracy)
+        # (supply with degrees to turn)
+        self.turn(round(count*512/360,0))
+
+    def turnDistance(self, dist, rad):
+        # Turn for translation of wheels or coil (inaccuracies involved e.g. due to thickness of rope)
+        # (supply with distance to move and radius in same metric)
+        self.turn(round(512*dist/(2*math.pi*rad),0))
+
+    def main(self):
+        print("moving started")
+
+        print("One Step")
+        self.turnSteps(1)
+        time.sleep(3) # 0.5 # TODO: asynchronous
+
+        print("3 Steps") # 20
+        self.turnSteps(3) # 20
+        time.sleep(3) # 0.5
+
+        print("quarter turn")
+        self.turnDegrees(90)
+
+        print("moving stopped")
+        self.close()
+
+import time
+import RPi.GPIO as GPIO
+import math
+
+# /usr/share/code/project/Lucky_turntable
+class StepMotor():
+
+    def __init__(self):
+
+        # set GPIO BCM mode
+        GPIO.setmode(GPIO.BCM)
+
+        # These are the pins which will be used on the Raspberry Pi
+        self.pin_A = 5
+        self.pin_B = 6
+        self.pin_C = 13
+        self.pin_D = 25
+        self.interval = 0.0011
+
+        # Declare pins as output
+        GPIO.setup(self.pin_A,GPIO.OUT)
+        GPIO.setup(self.pin_B,GPIO.OUT)
+        GPIO.setup(self.pin_C,GPIO.OUT)
+        GPIO.setup(self.pin_D,GPIO.OUT)
+        GPIO.output(self.pin_A, False)
+        GPIO.output(self.pin_B, False)
+        GPIO.output(self.pin_C, False)
+        GPIO.output(self.pin_D, False)
+
+    def Step1(self):
+        GPIO.output(self.pin_D, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_D, False)
+
+    def Step2(self):
+        GPIO.output(self.pin_D, True)
+        GPIO.output(self.pin_C, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_D, False)
+        GPIO.output(self.pin_C, False)
+
+    def Step3(self):
+        GPIO.output(self.pin_C, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_C, False)
+
+    def Step4(self):
+        GPIO.output(self.pin_B, True)
+        GPIO.output(self.pin_C, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_B, False)
+        GPIO.output(self.pin_C, False)
+
+    def Step5(self):
+        GPIO.output(self.pin_B, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_B, False)
+
+    def Step6(self):
+        GPIO.output(self.pin_A, True)
+        GPIO.output(self.pin_B, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_A, False)
+        GPIO.output(self.pin_B, False)
+
+    def Step7(self):
+        GPIO.output(self.pin_A, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_A, False)
+
+    def Step8(self):
+        GPIO.output(self.pin_D, True)
+        GPIO.output(self.pin_A, True)
+        time.sleep(self.interval)
+        GPIO.output(self.pin_D, False)
+        GPIO.output(self.pin_A, False)
+
+    def turn(self,count):
+        for i in range (int(count)):
+            self.Step1()
+            self.Step2()
+            self.Step3()
+            self.Step4()
+            self.Step5()
+            self.Step6()
+            self.Step7()
+            self.Step8()
+
+    def turnSteps(self, count):
+        # Turn n steps
+        # (supply with number of steps to turn)
+        for i in range (count):
+            self.turn(1)
+
+    def turnDegrees(self, count):
+        # Turn n degrees (small values can lead to inaccuracy)
+        # (supply with degrees to turn)
+        self.turn(round(count*512/360,0))
+
+    def turnDistance(self, dist, rad):
+        # Turn for translation of wheels or coil (inaccuracies involved e.g. due to thickness of rope)
+        # (supply with distance to move and radius in same metric)
+        self.turn(round(512*dist/(2*math.pi*rad),0))
+
+    def main(self):
+        print("moving started")
+        print("360 turn")
+        for i in range(1): # 7
+            self.turnDegrees(360)
+        print("moving stopped")
+        GPIO.cleanup()
+
+###############################################################################
 # main menu                                                                   #
 ###############################################################################
 
@@ -557,19 +945,20 @@ class Vibration():
 # sys, GPIO, GPIO-R, Category, H/W, Class Name
 menu_items = [
     [ 1, -1, -1, 'Input', 'Joystick'],
-    [19, -1, -1, 'Input', '4x4 button matrix'],
+    [19, -1, -1, 'Input', '4x4 button matrix', 'ButtonMatrix'],
     [24,  0, 17, 'Input', 'Touch sensor', 'TouchSensor'],
     [26, -1, -1, 'Input', 'RC522 RFID induction module'],
 
     [ 2, -1, -1, 'Display', '4 Digits Segment LED', 'FourDigitSegment'],
     [ 4, -1, -1, 'Display', 'Screen driver'],
     [ 8, 25, 26, 'Display', 'GPIO indicate LED / only 26pin', 'GPIOLed'],
+#    [88, 25, 26, 'Display', 'GPIO indicate LED', 'GPIOLed_DONOT_USE'],
     [12, -1, -1, 'Display', 'LCD1602', 'LCD1602'],
     [25, -1, -1, 'Display', '8x8 RGB matrix'],
 
     [ 9, -1, -1, 'Sensor', 'DHT11 temperature and humidity sensor', 'DHT'],
     [11,  3, 22, 'Sensor', 'Tilt sensor', 'Tilt'],
-    [40, -1, 23, 'Sensor', 'Motion sensor', 'Motion'],
+    [50, -1, 23, 'Sensor', 'Motion sensor', 'Motion'],
     [13,  4, 23, 'Sensor', 'PIR sensor'],
     [14,  5, 24, 'Sensor', 'Sound sensor', 'Sound'],
     [27, -1, -1, 'Sensor', 'Light intensity sensor', 'LightSensor'],
@@ -579,7 +968,7 @@ menu_items = [
     [ 5, -1, -1, 'Other H/W', 'Cooling fan'],
     [ 6, -1, -1, 'Other H/W', 'Raspberry Pi and PCBA connection switch'],
     [20,  1, 18, 'Other H/W', 'Buzzer', 'Buzzer'],
-    [200, 1, 18, 'Other H/W', 'Touch Button And Buzzer', 'TouchButtonAndBuzzer'],
+    [40,  1, 18, 'Other H/W', 'Touch Button And Buzzer', 'TouchButtonAndBuzzer'],
     [21, -1, -1, 'Other H/W', 'PIR sensitivity adjustment'],
     [22,  2, 27, 'Other H/W', 'Vibration motor', 'Vibration'],
     [23, -1, -1, 'Other H/W', 'Sound sensor sensitivity adjustment'],
@@ -589,11 +978,11 @@ menu_items = [
     [10, -1, -1, 'I/F', 'Breadboard'],
     [15, -1, -1, 'I/F', 'IR sensor interface'],
     [16, -1, -1, 'I/F', 'I/O/ADC/I2C/UART expantion interface'],
-    [17, -1, -1, 'I/F', '9g servo interface'], 
-    [18, -1, -1, 'I/F', 'Stepper motor interface'],
+    [17, 21,  5, 'I/F', '9g servo interface', 'ServoMotor'], 
+    [18, -1, -1, 'I/F', 'Stepper motor interface', 'StepMotor'],
 
-#-- -- Camera
-#-- -- Microphone
+#Camera
+#Microphone
 
 #execute pinout cmd
 #Connection
@@ -603,31 +992,12 @@ menu_items = [
 #2.4GHz Keyboard & Mouse
 #USB 1/2/3/4
 
+# storage
+# df -m cmd
+
     [99, -1, -1, '', 'Execute ALL!', 'DUMMY'],
     [ 0, -1, -1, '', 'Exit this menu (or Ctrl+C)', 'DUMMY'],
 ]
-
-# H/W GR  G    PHY     G GR H/W
-#        3V3 (1) (2) 5V
-#      2     (3) (4) 5V
-#      3     (5) (6) GND
-#      4     (7) (8)     14
-#        GND (9) (10)    15
-# Toc 17  0 (11) (12)  1 18 Buzzer
-# Vib 27  2 (13) (14)GND
-# Til 22  3 (15) (16)  4 23 PIR
-#        3V3(17) (18)  5 24 Sound
-#     10    (19) (20)GND
-#      9    (21) (22)  6 25 StepM-4
-#     11    (23) (24)     8
-#        GND(25) (26)     7
-#      0    (27) (28)     1
-# SM1  5 21 (29) (30)GND
-# SM2  6 22 (31) (32) 26 12 RGB Matrix
-# SM3 13 23 (33) (34)GND
-# SEV 19 24 (35) (36) 27 16 Ultrasonic-Trig
-# UsE 26 25 (37) (38) 28 20 IR
-#        GND(39) (40) 29 21 Relay
 
 
 def default_menu():
@@ -652,29 +1022,26 @@ def default_menu():
     while True:
         print('Input No')
         menuno = int(input())
-        if menuno == 0:
-            sys.exit()
-        elif menuno == 99:
-            for item in menu_items:
-                if item[0] == 99:
-                    sys.exit()
-                if len(item) == 6:
-                    import importlib
-                    MyClass = getattr(importlib.import_module("test_sensors"), item[5])
-                    instance = MyClass()
-            sys.exit()
-
-# 27   light.main()
 
         for item in menu_items:
-            if item[0] == menuno and len(item) == 6:
+            if item[0] == 0 or item[0] == 99:
+                sys.exit()
+
+            if item[0] == menuno and len(item) == 5:
+                print(str(menuno) + ' Not Implemented!')
+                break
+
+            if (item[0] == menuno or menuno == 99) and len(item) == 6:
                 # dynamic loading https://stackoverflow.com/questions/4821104/dynamic-instantiation-from-string-name-of-a-class-in-dynamically-imported-module/30941292#30941292
                 import importlib
                 MyClass = getattr(importlib.import_module("test_sensors"), item[5])
                 instance = MyClass()
-                sys.exit()
-
-        print(str(menuno) + ' Not Implemented!')
+                try:
+                    instance.main()
+                except AttributeError:
+                    pass
+                if menuno != 99:
+                    sys.exit()
 
 def main():
     default_menu()
@@ -682,7 +1049,7 @@ def main():
     # Select Menu Order
     # 1. Category(default)
     # 2. Official Document Number
-    # 3. GPIO Real Assign Number (using coding)
+    # 3. GPIO Real Assign Number (use coding)
     # 4. GPIO Number (schematic)
 
 if __name__ == "__main__":
