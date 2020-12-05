@@ -1,54 +1,104 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Author : original author Elecrow
+# Author : original author Elecrow and other contributors
 
 ###############################################################################
 # DATA Definition                                                             #
 ###############################################################################
 gpio_pins = [
-    #PH  GP  GR  DESC          PH  GP  GR  DESC        # Always ON
-    [ 1, -1, -1, '3V3'],      [ 2, -1, -1, '5V'],      # * *
-    [ 3, -1,  2, 'SDA1'],     [ 4, -1, -1, '5V'],      #   *
-    [ 5, -1,  3, 'SCL1'],     [ 6, -1, -1, 'GND'],
-    [ 7, -1,  4, '1Wire'],    [ 8, -1, 14, 'TxD'],
-    [ 9, -1, -1, 'GND'],      [10, -1, 15, 'RxD'],
-    [11,  0, 17, 'Touch'],    [12,  1, 18, 'Buzzer'],
-    [13,  2, 27, 'Vib'],      [14, -1, -1, 'GND'],
-    [15,  3, 22, 'Tilt'],     [16,  4, 23, 'Motion?'], # * *blink
-    [17, -1, -1, '3V3'],      [18,  5, 24, 'Sound'],   # *
-    [19, -1, 10, 'MOSI'],     [20, -1, -1, 'GND'],
-    [21, -1,  9, 'MISO'],     [22,  6, 25, 'Servo-M'],
-    [23, -1, 11, 'SCLK'],     [24, -1,  8, 'CE0'],
-    [25, -1, -1, 'GND'],      [26, -1,  7, 'CE1'],
-    [27, -1,  0, 'SDA0'],     [28, -1,  1, 'SCL0'],    # *
-    [29, 21,  5, 'Step-M-1'], [30, -1, -1, 'GND'],
-    [31, 22,  6, 'Step-M-2'], [32, 26, 12, 'RGB Matrix'],
-    [33, 23, 13, 'Step-M-3'], [34, -1, -1, 'GND'],
-    [35, 24, 19, 'Step-M-4'], [36, 27, 16, 'Ultrasonic-TRIG'],
-    [37, 25, 26, 'Uls-ECHO'], [38, 28, 20, 'IR'],
-    [39, -1, -1, 'GND'],      [40, 29, 21, 'Relay'],
+    #PH  GP  GR  DESC           PH  GP  GR  DESC        # Always ON
+    [ 1, -1, -1, '3V3'],       [ 2, -1, -1, '5V'],      # * *
+    [ 3, -1,  2, 'SDA1'],      [ 4, -1, -1, '5V'],      #   *
+    [ 5, -1,  3, 'SCL1'],      [ 6, -1, -1, 'GND'],
+    [ 7, -1,  4, '1Wire'],     [ 8, -1, 14, 'TxD'],
+    [ 9, -1, -1, 'GND'],       [10, -1, 15, 'RxD'],
+    [11,  0, 17, 'Touch'],     [12,  1, 18, 'Buzzer'],
+    [13,  2, 27, 'Vibration'], [14, -1, -1, 'GND'],
+    [15,  3, 22, 'Tilt'],      [16,  4, 23, 'Motion'],  # * *blink
+    [17, -1, -1, '3V3'],       [18,  5, 24, 'Sound'],   # *
+    [19, -1, 10, 'MOSI'],      [20, -1, -1, 'GND'],
+    [21, -1,  9, 'MISO'],      [22,  6, 25, 'Servo-M'],
+    [23, -1, 11, 'SCLK'],      [24, -1,  8, 'CE0'],
+    [25, -1, -1, 'GND'],       [26, -1,  7, 'CE1'],
+    [27, -1,  0, 'SDA0'],      [28, -1,  1, 'SCL0'],    # *
+    [29, 21,  5, 'Step-M-1'],  [30, -1, -1, 'GND'],
+    [31, 22,  6, 'Step-M-2'],  [32, 26, 12, 'RGB Matrix?'],
+    [33, 23, 13, 'Step-M-3'],  [34, -1, -1, 'GND'],
+    [35, 24, 19, 'Step-M-4'],  [36, 27, 16, 'Ultrasonic-TRIG'],
+    [37, 25, 26, 'Uls-ECHO'],  [38, 28, 20, 'IR'],
+    [39, -1, -1, 'GND'],       [40, 29, 21, 'Relay'],
 ]
 
 ###############################################################################
 # INPUT                                                                       #
 ###############################################################################
 
-# /usr/share/code/project/Calculator/Calculator.py
-class ButtonMatrix():
-# Author : original author stenobot
-# Original Author Github: https://github.com/stenobot/SoundMatrixPi
+import spidev
+import time
+class Joystick():
 
     def __init__(self):
-        import RPi.GPIO as GPIO
-        import time
-        import spidev
+        print('/usr/share/code/project/Memory/Memory.py')
+        print('Press CTRL+C to exit')
+
+        self.x_channel = 1
+        self.y_channel = 0
+
+        self.delay = 0.05
+ 
+        # Open SPI bus
+        self.spi = spidev.SpiDev()
+        self.spi.open(0,1)
+        self.spi.max_speed_hz=1000000
+
+    # Function to read SPI data from MCP3008 chip
+    # Channel must be an integer 0-7
+    def ReadChannel(self, channel):
+        adc = self.spi.xfer2([1,(8+channel)<<4,0])
+        data = ((adc[1]&3) << 8) + adc[2]
+        return data
+
+    def sprite(self):
+        # Read the  data
+        x_value = self.ReadChannel(self.x_channel)
+        y_value = self.ReadChannel(self.y_channel)
+        print("(x, y) = ("+str(x_value)+", "+str(y_value)+")")
+        if x_value > 650:
+            print("Left")
+        if x_value < 400:
+            print("Right")
+        if y_value > 650:
+            print("Up")
+        if y_value < 400:
+            print("Down")
+
+        # Wait before repeating loop
+        time.sleep(self.delay)
+
+    def main(self):
+        try:
+            while True:
+                self.sprite()
+        except KeyboardInterrupt:
+            pass
+
+#import RPi.GPIO as GPIO
+import spidev
+import time
+class ButtonMatrix():
+
+    def __init__(self):
+        print('/usr/share/code/project/Calculator/Calculator.py')
+        print('Author : original author stenobot')
+        print('Original Author Github: https://github.com/stenobot/SoundMatrixPi')
+        print('Press CTRL+C to exit')
 
         # Open SPI bus
         self.spi = spidev.SpiDev()
         self.spi.open(0,1)
         self.spi.max_speed_hz=1000000
 
-        GPIO.setmode(GPIO.BCM)
+#        GPIO.setmode(GPIO.BCM) # TODO: delete this?
 
         # Define key channels
         self.key_channel = 4
@@ -111,16 +161,17 @@ class ButtonMatrix():
                             self.activateButton(self.key)
                 time.sleep(self.delay)
         except KeyboardInterrupt:
-            GPIO.cleanup()
+#            GPIO.cleanup()
+            pass
 
-# touch.py
+import RPi.GPIO as GPIO
+import time
 class TouchSensor():
 
     def __init__(self):
-        import RPi.GPIO as GPIO
-        import time
-
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/touch.py')
         print('Touch Button')
+        print('Press CTRL+C to exit')
 
         # define touch pin
         touch_pin = 17
@@ -143,13 +194,13 @@ class TouchSensor():
 # OUTPUT                                                                      #
 ###############################################################################
 
-# segment.py
+import datetime
+from Adafruit_LED_Backpack import SevenSegment
+import time
 class FourDigitSegment():
 
     def __init__(self):
-        import time
-        import datetime
-        from Adafruit_LED_Backpack import SevenSegment
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/segment.py')
 
         # ===========================================================================
         # Clock Example
@@ -167,7 +218,7 @@ class FourDigitSegment():
             segment.write_display()
             time.sleep(0.2)
 
-        print("Press CTRL+C to exit")
+        print('Press CTRL+C to exit')
 
         # Continually update the time on a 4 char, 7-segment display
         try:
@@ -197,12 +248,13 @@ class FourDigitSegment():
             segment.clear()
             segment.write_display()
 
-# blinking_led.py
+import RPi.GPIO as GPIO
+import time
 class GPIOLed():
 
     def __init__(self):
-        import time
-        import RPi.GPIO as GPIO
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/blinking_led.py')
+        print('Press CTRL+C to exit')
 
         # define LED pin
         led_pin = 26
@@ -225,12 +277,13 @@ class GPIOLed():
             # CTRL+C detected, cleaning and quitting the script
             GPIO.cleanup()
 
-# BUG: i2c timeout after this test. AT YOUR OWN RISK!
+import RPi.GPIO as GPIO
+import time
 class GPIOLed_DONOT_USE():
 
     def __init__(self):
-        import time
-        import RPi.GPIO as GPIO
+        print('BUG: i2c timeout after this test. AT YOUR OWN RISK!')
+        print('Press CTRL+C to exit')
 
         GPIO.setmode(GPIO.BOARD)    
 
@@ -276,13 +329,14 @@ class GPIOLed_DONOT_USE():
             # CTRL+C detected, cleaning and quitting the script
             GPIO.cleanup()
 
-# lcd.py
+# Example using a character LCD backpack.
+import Adafruit_CharLCD as LCD
+import time
 class LCD1602():
 
     def __init__(self):
-        # Example using a character LCD backpack.
-        import time
-        import Adafruit_CharLCD as LCD
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/lcd.py')
+        print('Press CTRL+C to exit')
 
         # Define LCD column and row size for 16x2 LCD.
         lcd_columns = 16
@@ -357,11 +411,99 @@ class LCD1602():
             lcd.clear()
             lcd.set_backlight(1)
 
+from rpi_ws281x import PixelStrip, Color
+import random
+import time
+class RGBMatrix1:
+
+    def __init__(self):
+        print('/usr/share/code/project/Tilt_reminder/Tilt_reminder.py')
+        print('Required root privileges!')
+        print('Press CTRL+C to exit')
+
+        # LED strip configuration:
+        LED_COUNT = 64        # Number of LED pixels.
+        LED_PIN = 12          # GPIO pin connected to the pixels (18 uses $
+        LED_FREQ_HZ = 800000  # LED signal frequency in hertz (usually 800$
+        LED_DMA = 10          # DMA channel to use for generating signal ($
+        LED_BRIGHTNESS = 10   # Set to 0 for darkest and 255 for brightest
+        LED_INVERT = False    # True to invert the signal (when using NPN $
+        LED_CHANNEL = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
+
+        # TODO: root
+        self.strip = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL)
+        # Intialize the library (must be called once before other functions).
+        self.strip.begin()
+
+    def colorWipe(self, color, wait_ms=50):
+        """Wipe color across display a pixel at a time."""
+        for i in range(self.strip.numPixels()):
+            self.strip.setPixelColor(i, color)
+            self.strip.show()
+            time.sleep(wait_ms / 1000.0)
+
+            #  0  1  2  3  4  5  6  7
+            #  8  9 10 11 12 13 14 15
+            # 16 17 18 19 20 21 22 23
+            # 24 25 26 27 28 29 30 31
+            # 32 33 34 35 36 37 38 39
+            # 40 41 42 43 44 45 46 47
+            # 48 49 50 51 52 53 54 55
+            # 56 57 58 59 60 61 62 63
+    def main(self):
+        numbers = [
+            [0, 1, 2, 3, 4, 5, 6, 7, 15, 23, 31, 39, 47, 55, 63, 62, 61, 60, 59, 58, 57, 56, 48, 40, 32, 24, 16, 8], # 0
+            [3, 11, 19, 27, 35, 43, 51, 59], # 1
+            [9, 2, 3, 4, 13, 21, 28, 28, 34, 41, 49, 57, 58, 59, 60, 61],     # 2
+            [2, 3, 4, 13, 21, 28, 27, 26, 25, 37, 45, 53, 60, 59, 58, 57],    # 3
+            [1, 9, 17, 25, 33, 41, 42, 43, 44, 45, 46, 47, 28, 36, 52, 60],   # 4
+            [1, 9, 17, 25, 26, 27, 28, 29, 38, 46, 54, 61, 60, 59, 58, 57, 2, 3, 4, 5], # 5
+            [6, 5, 4, 3, 2, 1, 9, 17, 25, 33, 41, 49, 57, 58, 59, 60, 61, 62, 54, 46, 38, 37, 36, 35, 34], # 6
+            [1, 2, 3, 4, 5, 6, 7, 15, 22, 29, 36, 44, 52, 60],                # 7
+            [4, 3, 2, 9, 18, 27, 36, 45, 53, 60, 59, 58, 49, 41, 34, 20, 13], # 8
+            [7, 6, 5, 4, 3, 2, 1, 9, 17, 25, 33, 34, 35, 36, 37, 38, 39, 31, 23, 15, 47, 55, 63, 62, 61, 60, 59, 58, 57] # 9
+        ]
+
+        # full pixles
+        self.colorWipe(Color(0,0,0), 10)
+        for cell in range(8*8):
+            r, g, b = random.randint(10, 250), random.randint(10, 250), random.randint(10, 250)
+            self.strip.setPixelColor(cell, Color(r, g, b))
+        self.strip.show()
+        time.sleep(0.1)
+
+        # numbers 0-9
+        self.colorWipe(Color(0,0,0), 10)
+        for num in numbers:
+            r, g, b = random.randint(10, 250), random.randint(10, 250), random.randint(10, 250)
+            for cell in num:
+                self.strip.setPixelColor(cell, Color(r, g, b))
+            self.strip.show()
+            time.sleep(0.1)
+            for cell in num:
+                self.strip.setPixelColor(cell, Color(0,0,0))
+            self.strip.show()
+        time.sleep(0.1)
+
+        try:
+            while True:
+                num = numbers[random.randint(0, len(numbers)-1)]
+                r, g, b = random.randint(10, 250), random.randint(10, 250), random.randint(10, 250)
+                for cell in num:
+                    self.strip.setPixelColor(cell, Color(r, g, b))
+                self.strip.show()
+                time.sleep(0.1)
+                for cell in num:
+                    self.strip.setPixelColor(cell, Color(0,0,0))
+                self.strip.show()
+        except KeyboardInterrupt:
+            self.colorWipe(Color(0,0,0), 10)
+
 ###############################################################################
 # Sensor                                                                      #
 ###############################################################################
 
-# dh11.py
+import Adafruit_DHT
 class DHT():
 # Copyright (c) 2014 Adafruit Industries
 # Author: Tony DiCola
@@ -385,8 +527,8 @@ class DHT():
 # SOFTWARE.
 
     def __init__(self):
-        import sys
-        import Adafruit_DHT
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/dh11.py')
+        print('Mesuaring temperature & humidity...')
 
         # set type of the sensor
         sensor = 11
@@ -409,12 +551,13 @@ class DHT():
         else:
             print('Failed to get reading. Try again!')
 
-# tilt.py
+import RPi.GPIO as GPIO
+import time
 class Tilt():
 
     def __init__(self):
-        import time
-        import RPi.GPIO as GPIO
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/tilt.py')
+        print('Press CTRL+C to exit')
 
         # define tilt pin
         tilt_pin = 22
@@ -436,12 +579,13 @@ class Tilt():
             # CTRL+C detected, cleaning and quitting the script
             GPIO.cleanup()
 
-# motion.py
+import RPi.GPIO as GPIO
+import time
 class Motion():
 
     def __init__(self):
-        import RPi.GPIO as GPIO
-        import time
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/motion.py')
+        print('Press CTRL+C to exit')
 
         # define motion pin
         motion_pin = 23
@@ -461,12 +605,13 @@ class Motion():
         except KeyboardInterrupt:
             GPIO.cleanup()
 
-# sound.py
+import RPi.GPIO as GPIO
+import time
 class Sound():
 
     def __init__(self):
-        import RPi.GPIO as GPIO
-        import time
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/sound.py')
+        print('Press CTRL+C to exit')
 
         # define sound pin
         sound_pin = 24
@@ -487,15 +632,16 @@ class Sound():
             # CTRL+C detected, cleaning and quitting the script
             GPIO.cleanup()
 
-# light_sensor.py
+import RPi.GPIO as GPIO
+import smbus
 class LightSensor():
-# Author: Matt Hawkins
-# Author's Git: https://bitbucket.org/MattHawkinsUK/
-# Author's website: https://www.raspberrypi-spy.co.uk
 
     def __init__(self):
-        import RPi.GPIO as GPIO
-        import smbus
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/light_sensor.py')
+        print('Author: Matt Hawkins')
+        print('Author\'s Git: https://bitbucket.org/MattHawkinsUK/')
+        print('Author\'s website: https://www.raspberrypi-spy.co.uk')
+        print('Press CTRL+C to exit')
 
         # Find the right revision for bus driver
         if(GPIO.RPI_REVISION == 1):
@@ -547,14 +693,14 @@ class LightSensor():
         except KeyboardInterrupt:
             pass
 
-# distance.py
+import RPi.GPIO as GPIO
+import time
 class Ultrasonic():
-# Author : www.modmypi.com
-# Link: https://www.modmypi.com/blog/hc-sr04-ultrasonic-range-sensor-on-the-raspberry-pi
 
     def __init__(self):
-        import RPi.GPIO as GPIO
-        import time
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/distance.py')
+        print('Author : www.modmypi.com')
+        print('Link: https://www.modmypi.com/blog/hc-sr04-ultrasonic-range-sensor-on-the-raspberry-pi')
 
         GPIO.setmode(GPIO.BCM)
 
@@ -592,12 +738,12 @@ class Ultrasonic():
 # Hardware                                                                    #
 ###############################################################################
 
-# relay.py
+import RPi.GPIO as GPIO
+import time
 class Relay():
 
     def __init__(self):
-        import RPi.GPIO as GPIO
-        import time
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/relay.pya')
 
         # define relay pin
         relay_pin = 21
@@ -619,12 +765,12 @@ class Relay():
         GPIO.output(relay_pin, GPIO.LOW)
         GPIO.cleanup()
 
-# buzzer.py
+import RPi.GPIO as GPIO
+import time
 class Buzzer():
 
     def __init__(self):
-        import RPi.GPIO as GPIO
-        import time
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/buzzer.py')
 
         buzzer_pin = 18
         GPIO.setmode(GPIO.BCM)
@@ -639,11 +785,12 @@ class Buzzer():
 
         GPIO.cleanup()
 
-# button_buzzer.py
+import RPi.GPIO as GPIO
 class TouchButtonAndBuzzer():
 
     def __init__(self):
-        import RPi.GPIO as GPIO
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/button_buzzer.py')
+        print('Press CTRL+C to exit')
 
         # configure both button and buzzer pins
         button_pin = 17 # CrowPi1 26
@@ -666,12 +813,13 @@ class TouchButtonAndBuzzer():
         except KeyboardInterrupt:
             GPIO.cleanup()
 
-# vibration.py
+import RPi.GPIO as GPIO
+import time
 class Vibration():
 
     def __init__(self):
-        import RPi.GPIO as GPIO
-        import time
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/vibration.py')
+        print('Press CTRL+C to exit')
 
         # define vibration pin
         vibration_pin = 27
@@ -696,19 +844,139 @@ class Vibration():
 # Interface                                                                   #
 ###############################################################################
 
-import time
 import RPi.GPIO as GPIO
-import math
-
-# stepmotor.py
-class ServoMotor():
-# Author : Original author ludwigschuster
-# Original Author Github: https://github.com/ludwigschuster/RasPi-GPIO-Stepmotor
+import time
+class IR:
 
     def __init__(self):
-#        import time
-#        import RPi.GPIO as GPIO
-#        import math
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/IR_New.py')
+        print('Press CTRL+C to exit')
+
+        # Define IR pin
+        self.PIN = 20
+        GPIO.setmode(GPIO.BCM)
+        # setup IR pin as input
+        GPIO.setup(self.PIN, GPIO.IN, GPIO.PUD_UP)
+
+        print("irm test start...")
+
+        self.indexes = {
+            0x45:'CH-',  0x46:'CH',   0x47:'CH+',
+            0x44:'PREV', 0x40:'NEXT', 0x43:'PLAY',
+            0x07:'VOL-', 0x15:'VOL+', 0x09:'EQ',
+            0x16:'0',    0x19:'100+', 0x0d:'200+',
+            0x0c:'1',    0x18:'2',    0x5e:'3',
+            0x08:'4',    0x1c:'5',    0x5a:'6',
+            0x42:'7',    0x52:'8',    0x4a:'9'
+        }
+
+    def decode(self, key_val):
+        if not key_val in self.indexes:
+            return 'Unknown'
+        return self.indexes[key_val]
+
+    def main(self):
+        try:
+            while True:
+                if GPIO.input(self.PIN) != 0:
+                    continue
+                
+                count = 0
+                while GPIO.input(self.PIN) == 0 and count < 200:
+                    count += 1
+                    time.sleep(0.00006)
+
+                count = 0
+                while GPIO.input(self.PIN) == 1 and count < 80:
+                    count += 1
+                    time.sleep(0.00006)
+
+                idx = 0
+                cnt = 0
+                data = [0,0,0,0]
+                for i in range(0,32):
+                    count = 0
+                    while GPIO.input(self.PIN) == 0 and count < 15:
+                        count += 1
+                        time.sleep(0.00006)
+
+                    count = 0
+                    while GPIO.input(self.PIN) == 1 and count < 40:
+                        count += 1
+                        time.sleep(0.00006)
+
+                    if count > 8:
+                        data[idx] |= 1<<cnt
+                    if cnt == 7:
+                        cnt = 0
+                        idx += 1
+                    else:
+                        cnt += 1
+
+                if data[0]+data[1] == 0xFF and data[2]+data[3] == 0xFF:
+                    print("Get the key[0x%02x][%s]" % (data[2], self.decode(data[2])))
+        except KeyboardInterrupt:
+            GPIO.cleanup()
+
+import RPi.GPIO as GPIO
+import time
+class sg90:
+
+    def __init__( self, direction = 0):
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/servo.py')
+        print('Author : Original author WindVoiceVox')
+        print('Original Author Github: https://github.com/WindVoiceVox/Raspi_SG90')
+        print('Press CTRL+C to exit')
+
+        self.pin = 19 # CrowPi1 25
+        GPIO.setmode( GPIO.BCM )
+        GPIO.setup( self.pin, GPIO.OUT )
+        self.direction = int( direction )
+        self.servo = GPIO.PWM( self.pin, 50 )
+        self.servo.start(0.0)
+
+    def cleanup( self ):
+        self.servo.ChangeDutyCycle(self._henkan(0))
+        time.sleep(0.3)
+        self.servo.stop()
+        GPIO.cleanup()
+
+    def currentdirection( self ):
+       return self.direction
+
+    def _henkan( self, value ):
+       return 0.05 * value + 7.0
+
+    def setdirection( self, direction, speed ):
+        for d in range( self.direction, direction, int(speed) ):
+            self.servo.ChangeDutyCycle( self._henkan( d ) )
+            self.direction = d
+            time.sleep(0.1)
+        self.servo.ChangeDutyCycle( self._henkan( direction ) )
+        self.direction = direction
+
+    def main(self):
+        try:
+            while True:
+                print("Turn left ...")
+                self.setdirection( 100, 80 )
+                time.sleep(0.5)
+                print("Turn right ...")
+                self.setdirection( -100, 80 )
+                time.sleep(0.5)
+        except KeyboardInterrupt:
+            self.cleanup()
+
+import math
+import RPi.GPIO as GPIO
+import time
+class ServoMotor_LikeStep():
+
+    def __init__(self):
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/stepmotor.py')
+        print('Author : Original author ludwigschuster')
+        print('Original Author Github: https://github.com/ludwigschuster/RasPi-GPIO-Stepmotor')
+        print('Press CTRL+C to exit')
 
 		# set GPIO mode
         GPIO.setmode(GPIO.BCM)
@@ -825,14 +1093,14 @@ class ServoMotor():
         print("moving stopped")
         self.close()
 
-import time
-import RPi.GPIO as GPIO
 import math
-
-# /usr/share/code/project/Lucky_turntable
+import RPi.GPIO as GPIO
+import time
 class StepMotor():
 
     def __init__(self):
+        print('/usr/share/code/project/Lucky_turntable')
+        print('Press CTRL+C to exit')
 
         # set GPIO BCM mode
         GPIO.setmode(GPIO.BCM)
@@ -944,79 +1212,82 @@ class StepMotor():
 # menu item definition
 # sys, GPIO, GPIO-R, Category, H/W, Class Name
 menu_items = [
-    [ 1, -1, -1, 'Input', 'Joystick'],
+# FIXME: How to test?
+    [ 4, -1, -1, 'Disp', 'Screen driver / If you seen this, screen is working (^ ^)/'],
+    [ 5, -1, -1, 'Other', 'Cooling fan / How to control on software?'],
+    [ 7, -1, -1, 'I/F', 'GPIO export'],
+    [10, -1, -1, 'I/F', 'Breadboard'],
+# TODO: How to get current setting values?
+    [21, -1, -1, 'Other', 'PIR sensitivity adjustment'],
+    [23, -1, -1, 'Other', 'Sound sensor sensitivity adjustment'],
+    [28, -1, -1, 'Other', 'LCD1602 brightness adjustment'],
+
+    [ 1, -1, -1, 'Input', 'Joystick', 'Joystick'],
     [19, -1, -1, 'Input', '4x4 button matrix', 'ButtonMatrix'],
     [24,  0, 17, 'Input', 'Touch sensor', 'TouchSensor'],
-    [26, -1, -1, 'Input', 'RC522 RFID induction module'],
+    [26, -1, -1, 'Input', 'RC522 RFID induction module / Required MFRC522.py'],
+# NFC?
 
-    [ 2, -1, -1, 'Display', '4 Digits Segment LED', 'FourDigitSegment'],
-    [ 4, -1, -1, 'Display', 'Screen driver'],
-    [ 8, 25, 26, 'Display', 'GPIO indicate LED / only 26pin', 'GPIOLed'],
-#    [88, 25, 26, 'Display', 'GPIO indicate LED', 'GPIOLed_DONOT_USE'],
-    [12, -1, -1, 'Display', 'LCD1602', 'LCD1602'],
-    [25, -1, -1, 'Display', '8x8 RGB matrix'],
+    [ 2, -1, -1, 'Disp', '4 Digits Segment LED', 'FourDigitSegment'],
+    [ 8, 25, 26, 'Disp', 'GPIO indicate LED / only 26pin', 'GPIOLed'],
+#    [88, 25, 26, 'Disp', 'GPIO indicate LED', 'GPIOLed_DONOT_USE'], # for advanced users
+    [12, -1, -1, 'Disp', 'LCD1602', 'LCD1602'],
+    [25, -1, -1, 'Disp', '8x8 RGB matrix / ** Required root privileges! **', 'RGBMatrix1'],
 
     [ 9, -1, -1, 'Sensor', 'DHT11 temperature and humidity sensor', 'DHT'],
     [11,  3, 22, 'Sensor', 'Tilt sensor', 'Tilt'],
-    [50, -1, 23, 'Sensor', 'Motion sensor', 'Motion'],
-    [13,  4, 23, 'Sensor', 'PIR sensor'],
+    [13,  4, 23, 'Sensor', 'PIR(Passive Infrared Ray) Motion sensor', 'Motion'],
     [14,  5, 24, 'Sensor', 'Sound sensor', 'Sound'],
     [27, -1, -1, 'Sensor', 'Light intensity sensor', 'LightSensor'],
     [29, 27, 16, 'Sensor', 'Ultrasonic sensor', 'Ultrasonic'],
 
-    [ 3, 29, 21, 'Other H/W', 'Relay', 'Relay'],
-    [ 5, -1, -1, 'Other H/W', 'Cooling fan'],
-    [ 6, -1, -1, 'Other H/W', 'Raspberry Pi and PCBA connection switch'],
-    [20,  1, 18, 'Other H/W', 'Buzzer', 'Buzzer'],
-    [40,  1, 18, 'Other H/W', 'Touch Button And Buzzer', 'TouchButtonAndBuzzer'],
-    [21, -1, -1, 'Other H/W', 'PIR sensitivity adjustment'],
-    [22,  2, 27, 'Other H/W', 'Vibration motor', 'Vibration'],
-    [23, -1, -1, 'Other H/W', 'Sound sensor sensitivity adjustment'],
-    [28, -1, -1, 'Other H/W', 'LCD1602 brightness adjustment'],
+    [ 3, 29, 21, 'Other', 'Relay', 'Relay'],
+    [ 6, -1, -1, 'Other', 'Raspberry Pi and PCBA connection switch'],
+    [20,  1, 18, 'Other', 'Buzzer', 'Buzzer'],
+    [40,  1, 18, 'Other', 'Touch Button And Buzzer', 'TouchButtonAndBuzzer'],
+    [22,  2, 27, 'Other', 'Vibration motor', 'Vibration'],
 
-    [ 7, -1, -1, 'I/F', 'GPIO export'],
-    [10, -1, -1, 'I/F', 'Breadboard'],
-    [15, -1, -1, 'I/F', 'IR sensor interface'],
-    [16, -1, -1, 'I/F', 'I/O/ADC/I2C/UART expantion interface'],
-    [17, 21,  5, 'I/F', '9g servo interface', 'ServoMotor'], 
-    [18, -1, -1, 'I/F', 'Stepper motor interface', 'StepMotor'],
+    [15, 28, 20, 'I/F', 'IR sensor interface', 'IR'],
+    [16, -1, -1, 'I/F', 'I/O/ADC/I2C/UART expantion interface / e.g. Crowtail Niusture'],
+    [17, 24, 19, 'I/F', '9g servo interface', 'sg90'], 
+    [34, 24, 19, 'I/F', '9g servo interface / Like a Step Motor?', 'ServoMotor_LikeStep'], 
+    [18,  6, 25, 'I/F', 'Stepper motor interface', 'StepMotor'],
 
-#Camera
-#Microphone
+# Camera
+# Microphone, Speacker, Earphone
 
-#execute pinout cmd
-#Connection
-#Wired LAN
-#Wireless LAN
-#Bluetooth
-#2.4GHz Keyboard & Mouse
-#USB 1/2/3/4
+# pinout cmd may help
+# Connectivity
+#  Wired LAN
+#  Wireless LAN
+#  Bluetooth
+#  2.4GHz Keyboard & Mouse
+#  USB 1/2/3/4
 
 # storage
 # df -m cmd
 
-    [99, -1, -1, '', 'Execute ALL!', 'DUMMY'],
-    [ 0, -1, -1, '', 'Exit this menu (or Ctrl+C)', 'DUMMY'],
+    [99, -1, -1, 'System', 'Execute ALL!', 'DUMMY'],
+    [ 0, -1, -1, 'System', 'Exit this menu (or Ctrl+C)', 'DUMMY'],
 ]
 
-
+import sys
+import importlib
 def default_menu():
-    import sys
-
     print('')
     print('CrowPi2 Sensor Tester')
     print('')
-    print('   - NOT Implemented Test Function...')
-    print('      G GPIO')
-    print('        GR GPIO Real')
+    print('     \t G GPIO')
+    print('     \t   GR GPIO Real')
+    print('     \t        - NOT Implemented Test Function...')
 
-    print(' No   G GR Item')
+    print(' Cat.\t G GR No Item')
     for item in menu_items:
         impl = '-' if len(item) == 5 else ' '
         gpio = '  ' if item[1] == -1 else str(item[1]).rjust(2, ' ')
         gpior = '  ' if item[2] == -1 else str(item[2]).rjust(2, ' ')
         # printf https://stackoverflow.com/questions/19457227/how-to-print-like-printf-in-python3/37848366#37848366
-        sys.stdout.write(" %2d%s %s %s %s\n" % (item[0], impl, gpio, gpior, item[4]))
+        sys.stdout.write(" %s\t%s %s %2d%s %s\n" % (item[3], gpio, gpior, item[0], impl, item[4]))
     print('')
 
     while True:
@@ -1032,12 +1303,13 @@ def default_menu():
                 break
 
             if (item[0] == menuno or menuno == 99) and len(item) == 6:
+                print('\n********** ********** ********** **********')
+                print('[' + item[3] + '] - ' + item[4])
                 # dynamic loading https://stackoverflow.com/questions/4821104/dynamic-instantiation-from-string-name-of-a-class-in-dynamically-imported-module/30941292#30941292
-                import importlib
                 MyClass = getattr(importlib.import_module("test_sensors"), item[5])
                 instance = MyClass()
                 try:
-                    instance.main()
+                    instance.main() # force execute main method without confirm imeplemented
                 except AttributeError:
                     pass
                 if menuno != 99:
