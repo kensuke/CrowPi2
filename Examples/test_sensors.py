@@ -2,14 +2,20 @@
 # -*- coding: utf-8 -*-
 # Author : original author Elecrow and other contributors
 
-###############################################################################
-# DATA Definition                                                             #
-###############################################################################
+# https://qiita.com/Kobayashi2019/items/03e31ee50b924f428e71
+# don't create __pycache__
+import sys
+sys.dont_write_bytecode = True
+
+################################################################################
+# DATA Definition                                                              #
+################################################################################
 gpio_pins = [
-    #PH  GP  GR  DESC           PH  GP  GR  DESC        # Always ON
+    # PHYSICAL Port No., GPIO No., BCM No.
+    #PHY GP  BCM  DESC          PHY GP  BCM  DESC       # Always ON
     [ 1, -1, -1, '3V3'],       [ 2, -1, -1, '5V'],      # * *
     [ 3, -1,  2, 'SDA1'],      [ 4, -1, -1, '5V'],      #   *
-    [ 5, -1,  3, 'SCL1'],      [ 6, -1, -1, 'GND'],
+    [ 5, -1,  3, 'SCL1'],      [ 6, -1, -1, 'GND'],     # I2C
     [ 7, -1,  4, '1Wire'],     [ 8, -1, 14, 'TxD'],
     [ 9, -1, -1, 'GND'],       [10, -1, 15, 'RxD'],
     [11,  0, 17, 'Touch'],     [12,  1, 18, 'Buzzer'],
@@ -29,10 +35,12 @@ gpio_pins = [
     [39, -1, -1, 'GND'],       [40, 29, 21, 'Relay'],
 ]
 
-###############################################################################
-# INPUT                                                                       #
-###############################################################################
+################################################################################
+# INPUT                                                                        #
+################################################################################
 
+######################################################################
+# Joystick
 import spidev
 import time
 class Joystick():
@@ -82,7 +90,8 @@ class Joystick():
         except KeyboardInterrupt:
             pass
 
-#import RPi.GPIO as GPIO
+######################################################################
+# matrix button
 import spidev
 import time
 class ButtonMatrix():
@@ -97,8 +106,6 @@ class ButtonMatrix():
         self.spi = spidev.SpiDev()
         self.spi.open(0,1)
         self.spi.max_speed_hz=1000000
-
-#        GPIO.setmode(GPIO.BCM) # TODO: delete this?
 
         # Define key channels
         self.key_channel = 4
@@ -161,9 +168,10 @@ class ButtonMatrix():
                             self.activateButton(self.key)
                 time.sleep(self.delay)
         except KeyboardInterrupt:
-#            GPIO.cleanup()
             pass
 
+######################################################################
+# Touch Sensor
 import RPi.GPIO as GPIO
 import time
 class TouchSensor():
@@ -190,10 +198,82 @@ class TouchSensor():
             # CTRL+C detected, cleaning and quitting the script
             GPIO.cleanup()
 
-###############################################################################
-# OUTPUT                                                                      #
-###############################################################################
+######################################################################
+# RFID Reader
+import RPi.GPIO as GPIO
+import time
+class RFIDReader():
 
+    def __init__(self):
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/RFID/Read.py & MFRC522.py')
+        print('Copyright 2014,2018 Mario Gomez <mario.gomez@teubi.co>')
+
+
+        # https://qiita.com/yuukiclass/items/88e9ac6c5a3b5ab56cc4
+        try:
+            import MFRC522
+        except Exception as e:
+            print(e)
+            url = 'https://raw.githubusercontent.com/Elecrow-RD/CrowPi/master/Examples/RFID/MFRC522.py'
+            print('downloading MFRC522.py from ' + url)
+            import urllib.request # for python3
+            urllib.request.urlretrieve(url, 'MFRC522.py')
+            time.sleep(0.5) # a few rest
+
+            try:
+                import MFRC522
+            except Exception as e:
+                print(e)
+                return
+
+        try:
+        # Incase user wants to terminate, this function is exactly for that reason.
+#            import signal
+#            signal.signal(signal.SIGINT, end_read)
+            # create the reader object
+            MIFAREReader = MFRC522.MFRC522()
+
+            # Welcome greeting
+            print("Welcome to MFRC522 RFID Read example")
+            print("Press CTRL+C anytime to quit.")
+
+            # The function will continue running to detect untill user said otherwise
+            while True: #continue_reading:
+                # detect touch of the card, get status and tag type
+                (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
+                # check if card detected or not
+                if status == MIFAREReader.MI_OK:
+                    print("Card detected")
+
+                # Get the RFID card uid and status
+                (status,uid) = MIFAREReader.MFRC522_Anticoll()
+
+                # If status is alright, continue to the next stage
+                if status == MIFAREReader.MI_OK:
+                    # Print UID
+                    print("Card read UID: %s,%s,%s,%s" % (uid[0], uid[1], uid[2], uid[3]))
+                    # standard key for rfid tags
+                    key = [0xFF,0xFF,0xFF,0xFF,0xFF,0xFF]
+                    # Select the scanned tag
+                    MIFAREReader.MFRC522_SelectTag(uid)
+                    # authenticate
+                    status = MIFAREReader.MFRC522_Auth(MIFAREReader.PICC_AUTHENT1A, 8, key, uid)
+                    # check if authenticated successfully, read the data
+                    if status == MIFAREReader.MI_OK:
+                        MIFAREReader.MFRC522_Read(8)
+                        MIFAREReader.MFRC522_StopCrypto1()
+                    else:
+                        print("Authentication error")
+        except KeyboardInterrupt:
+            print("Ctrl+C captured, ending read.")
+            GPIO.cleanup()
+
+################################################################################
+# OUTPUT                                                                       #
+################################################################################
+
+######################################################################
+# 4 digit segment
 import datetime
 from Adafruit_LED_Backpack import SevenSegment
 import time
@@ -207,21 +287,20 @@ class FourDigitSegment():
         # ===========================================================================
         segment = SevenSegment.SevenSegment(address=0x70)
 
-        # Initialize the display. Must be called once before using the display.
-        segment.begin()
-
-        for i in range(10):
-            segment.set_digit(0, i)
-            segment.set_digit(1, (i+1)%10)
-            segment.set_digit(2, (i+2)%10)
-            segment.set_digit(3, (i+3)%10)
-            segment.write_display()
-            time.sleep(0.2)
-
-        print('Press CTRL+C to exit')
-
         # Continually update the time on a 4 char, 7-segment display
         try:
+            # Initialize the display. Must be called once before using the display.
+            segment.begin()
+            print('Press CTRL+C to exit')
+
+            for i in range(10):
+                segment.set_digit(0, i)
+                segment.set_digit(1, (i+1)%10)
+                segment.set_digit(2, (i+2)%10)
+                segment.set_digit(3, (i+3)%10)
+                segment.write_display()
+                time.sleep(0.2)
+
             while(True):
                 now = datetime.datetime.now()
                 hour = now.hour
@@ -248,6 +327,8 @@ class FourDigitSegment():
             segment.clear()
             segment.write_display()
 
+######################################################################
+# GPIO LED Blink
 import RPi.GPIO as GPIO
 import time
 class GPIOLed():
@@ -277,6 +358,8 @@ class GPIOLed():
             # CTRL+C detected, cleaning and quitting the script
             GPIO.cleanup()
 
+######################################################################
+# (GPIO LED Blink)
 import RPi.GPIO as GPIO
 import time
 class GPIOLed_DONOT_USE():
@@ -285,7 +368,7 @@ class GPIOLed_DONOT_USE():
         print('BUG: i2c timeout after this test. AT YOUR OWN RISK!')
         print('Press CTRL+C to exit')
 
-        GPIO.setmode(GPIO.BOARD)    
+#        GPIO.setmode(GPIO.BOARD)
 
         for pins in range(len(gpio_pins)):
             pin = gpio_pins[pins]
@@ -298,8 +381,8 @@ class GPIOLed_DONOT_USE():
         try:
             while True:
                 for pins in range(len(gpio_pins)/2):
-                    pin_o = gpio_pins[pins * 2]
-                    pin_e = gpio_pins[pins * 2 + 1]
+                    pin_o = gpio_pins[pins * 2]     # PYH odd  pin 1,3,5...
+                    pin_e = gpio_pins[pins * 2 + 1] # PYH even pin 2,4,6...
 
                     if pin_o[3] == '3V3' or pin_o[3] == '5V' or pin_o[3] == 'GND' or pin_o[3] == 'SDA0':
                         pin_o = -1
@@ -329,6 +412,8 @@ class GPIOLed_DONOT_USE():
             # CTRL+C detected, cleaning and quitting the script
             GPIO.cleanup()
 
+######################################################################
+# LCD
 # Example using a character LCD backpack.
 import Adafruit_CharLCD as LCD
 import time
@@ -411,6 +496,8 @@ class LCD1602():
             lcd.clear()
             lcd.set_backlight(1)
 
+######################################################################
+# LED matrix
 from rpi_ws281x import PixelStrip, Color
 import random
 import time
@@ -464,28 +551,28 @@ class RGBMatrix1:
             [7, 6, 5, 4, 3, 2, 1, 9, 17, 25, 33, 34, 35, 36, 37, 38, 39, 31, 23, 15, 47, 55, 63, 62, 61, 60, 59, 58, 57] # 9
         ]
 
-        # full pixles
-        self.colorWipe(Color(0,0,0), 10)
-        for cell in range(8*8):
-            r, g, b = random.randint(10, 250), random.randint(10, 250), random.randint(10, 250)
-            self.strip.setPixelColor(cell, Color(r, g, b))
-        self.strip.show()
-        time.sleep(0.1)
-
-        # numbers 0-9
-        self.colorWipe(Color(0,0,0), 10)
-        for num in numbers:
-            r, g, b = random.randint(10, 250), random.randint(10, 250), random.randint(10, 250)
-            for cell in num:
+        try:
+            # full pixles
+            self.colorWipe(Color(0,0,0), 10)
+            for cell in range(8*8):
+                r, g, b = random.randint(10, 250), random.randint(10, 250), random.randint(10, 250)
                 self.strip.setPixelColor(cell, Color(r, g, b))
             self.strip.show()
             time.sleep(0.1)
-            for cell in num:
-                self.strip.setPixelColor(cell, Color(0,0,0))
-            self.strip.show()
-        time.sleep(0.1)
 
-        try:
+            # numbers 0-9
+            self.colorWipe(Color(0,0,0), 10)
+            for num in numbers:
+                r, g, b = random.randint(10, 250), random.randint(10, 250), random.randint(10, 250)
+                for cell in num:
+                    self.strip.setPixelColor(cell, Color(r, g, b))
+                self.strip.show()
+                time.sleep(0.1)
+                for cell in num:
+                    self.strip.setPixelColor(cell, Color(0,0,0))
+                self.strip.show()
+            time.sleep(0.1)
+
             while True:
                 num = numbers[random.randint(0, len(numbers)-1)]
                 r, g, b = random.randint(10, 250), random.randint(10, 250), random.randint(10, 250)
@@ -499,10 +586,12 @@ class RGBMatrix1:
         except KeyboardInterrupt:
             self.colorWipe(Color(0,0,0), 10)
 
-###############################################################################
-# Sensor                                                                      #
-###############################################################################
+################################################################################
+# Sensor                                                                       #
+################################################################################
 
+######################################################################
+# DHT11 temperature
 import Adafruit_DHT
 class DHT():
 # Copyright (c) 2014 Adafruit Industries
@@ -529,28 +618,35 @@ class DHT():
     def __init__(self):
         print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/dh11.py')
         print('Mesuaring temperature & humidity...')
+        print('Press CTRL+C to exit')
 
         # set type of the sensor
         sensor = 11
         # set pin number
         pin = 4
 
-        # Try to grab a sensor reading.  Use the read_retry method which will retry up
-        # to 15 times to get a sensor reading (waiting 2 seconds between each retry).
-        humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
+        try:
+            while True:
+                # Try to grab a sensor reading.  Use the read_retry method which will retry up
+                # to 15 times to get a sensor reading (waiting 2 seconds between each retry).
+                humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
 
-        # Un-comment the line below to convert the temperature to Fahrenheit.
-        # temperature = temperature * 9/5.0 + 32
+                # Un-comment the line below to convert the temperature to Fahrenheit.
+                fahrenheit = temperature * 9/5.0 + 32
 
-        # Note that sometimes you won't get a reading and
-        # the results will be null (because Linux can't
-        # guarantee the timing of calls to read the sensor).
-        # If this happens try again!
-        if humidity is not None and temperature is not None:
-            print('Temp={0:0.1f}*  Humidity={1:0.1f}%'.format(temperature, humidity))
-        else:
-            print('Failed to get reading. Try again!')
+                # Note that sometimes you won't get a reading and
+                # the results will be null (because Linux can't
+                # guarantee the timing of calls to read the sensor).
+                # If this happens try again!
+                if humidity is not None and temperature is not None:
+                    print('Temp={0:0.1f}C, {1:0.1f}F,  Humidity={2:0.1f}%'.format(temperature, fahrenheit, humidity))
+                else:
+                    print('Failed to get reading. Try again!')
+        except KeyboardInterrupt:
+            pass
 
+######################################################################
+# Tilt
 import RPi.GPIO as GPIO
 import time
 class Tilt():
@@ -579,6 +675,8 @@ class Tilt():
             # CTRL+C detected, cleaning and quitting the script
             GPIO.cleanup()
 
+######################################################################
+# PIR MOtion Sensor
 import RPi.GPIO as GPIO
 import time
 class Motion():
@@ -605,6 +703,8 @@ class Motion():
         except KeyboardInterrupt:
             GPIO.cleanup()
 
+######################################################################
+# Sound Detect Sensor
 import RPi.GPIO as GPIO
 import time
 class Sound():
@@ -626,14 +726,17 @@ class Sound():
                 if(GPIO.input(sound_pin)==GPIO.LOW):
                     print('Sound Detected')
                 else:
-                    print('Sound of silence')
+                    print('Sound of Silence')
                 time.sleep(0.1)
         except KeyboardInterrupt:
             # CTRL+C detected, cleaning and quitting the script
             GPIO.cleanup()
 
+######################################################################
+# Light Sensor
 import RPi.GPIO as GPIO
 import smbus
+import time
 class LightSensor():
 
     def __init__(self):
@@ -650,7 +753,6 @@ class LightSensor():
             self.bus = smbus.SMBus(1)
 
         # Define some constants from the datasheet
-
         self.DEVICE = 0x5c # Default device I2C address
 
         self.POWER_DOWN = 0x00 # No active state
@@ -674,18 +776,15 @@ class LightSensor():
         self.ONE_TIME_LOW_RES_MODE = 0x23
 
     def convertToNumber(self, data):
-
         # Simple function to convert 2 bytes of data
         # into a decimal number
         return ((data[1] + (256 * data[0])) / 1.2)
 
     def readLight(self):
-
         data = self.bus.read_i2c_block_data(self.DEVICE,self.ONE_TIME_HIGH_RES_MODE_1)
         return self.convertToNumber(data)
 
     def main(self):
-        import time
         try:
             while True:
                 print("Light Level : " + str(self.readLight()) + " lx")
@@ -693,6 +792,8 @@ class LightSensor():
         except KeyboardInterrupt:
             pass
 
+######################################################################
+# Ultrasonic Sensor
 import RPi.GPIO as GPIO
 import time
 class Ultrasonic():
@@ -701,6 +802,7 @@ class Ultrasonic():
         print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/distance.py')
         print('Author : www.modmypi.com')
         print('Link: https://www.modmypi.com/blog/hc-sr04-ultrasonic-range-sensor-on-the-raspberry-pi')
+        print('Press CTRL+C to exit')
 
         GPIO.setmode(GPIO.BCM)
 
@@ -712,38 +814,42 @@ class Ultrasonic():
         GPIO.setup(TRIG,GPIO.OUT)
         GPIO.setup(ECHO,GPIO.IN)
 
-        GPIO.output(TRIG, False)
-        print("Waiting For Sensor To Settle in 2 seconds")
-        time.sleep(2)
+        try:
+            while True:
+                GPIO.output(TRIG, False)
+                print("Waiting For Sensor To Settle in 2 seconds")
+                time.sleep(2)
 
-        GPIO.output(TRIG, True)
-        time.sleep(0.00001)
-        GPIO.output(TRIG, False)
+                GPIO.output(TRIG, True)
+                time.sleep(0.00001)
+                GPIO.output(TRIG, False)
 
-        while GPIO.input(ECHO)==0:
-            pulse_start = time.time()
+                while GPIO.input(ECHO)==0:
+                    pulse_start = time.time()
 
-        while GPIO.input(ECHO)==1:
-            pulse_end = time.time()
+                while GPIO.input(ECHO)==1:
+                    pulse_end = time.time()
 
-        pulse_duration = pulse_end - pulse_start
+                pulse_duration = pulse_end - pulse_start
 
-        distance = pulse_duration * 17150
-        distance = round(distance, 2)
-        print("Distance: %scm" % distance)
+                distance = pulse_duration * 17150
+                distance = round(distance, 2)
+                print("Distance: %scm" % distance)
+        except KeyboardInterrupt:
+            GPIO.cleanup()
 
-        GPIO.cleanup()
+################################################################################
+# Hardware                                                                     #
+################################################################################
 
-###############################################################################
-# Hardware                                                                    #
-###############################################################################
-
+######################################################################
+# Relay
 import RPi.GPIO as GPIO
 import time
 class Relay():
 
     def __init__(self):
-        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/relay.pya')
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/relay.py')
 
         # define relay pin
         relay_pin = 21
@@ -765,26 +871,64 @@ class Relay():
         GPIO.output(relay_pin, GPIO.LOW)
         GPIO.cleanup()
 
+
+######################################################################
+# Switch
+import RPi.GPIO as GPIO
+import time
+class Switch():
+
+    def __init__(self):
+        print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/touch.py')
+        print('Switch On or Off with Touch Button')
+        print('Press CTRL+C to exit')
+
+        # define touch pin
+        touch_pin = 17
+        # set board mode to GPIO.BCM
+        GPIO.setmode(GPIO.BCM)
+        # set GPIO pin to INPUT
+        GPIO.setup(touch_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+        try:
+            while True:
+               # check if touch detected
+               if(GPIO.input(touch_pin)):
+                   print('Touch Detected') # TODO: always detedted when switch off ;-)
+               time.sleep(0.1)
+        except KeyboardInterrupt:
+            # CTRL+C detected, cleaning and quitting the script
+            GPIO.cleanup()
+
+######################################################################
+# Buzzer
 import RPi.GPIO as GPIO
 import time
 class Buzzer():
 
     def __init__(self):
         print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/buzzer.py')
+        print('beep 1 second, stop 3 seconds')
+        print('Press CTRL+C to exit')
 
         buzzer_pin = 18
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(buzzer_pin, GPIO.OUT)
 
-        # Make buzzer sound
-        GPIO.output(buzzer_pin, GPIO.HIGH)
-        time.sleep(0.5)
+        try:
+            while True:
+                # Make buzzer sound
+                GPIO.output(buzzer_pin, GPIO.HIGH)
+                time.sleep(1)
 
-        # Stop buzzer sound
-        GPIO.output(buzzer_pin, GPIO.LOW)
+                # Stop buzzer sound
+                GPIO.output(buzzer_pin, GPIO.LOW)
+                time.sleep(3)
+        except KeyboardInterrupt:
+            GPIO.cleanup()
 
-        GPIO.cleanup()
-
+######################################################################
+# Touch And Buzzer
 import RPi.GPIO as GPIO
 class TouchButtonAndBuzzer():
 
@@ -813,12 +957,15 @@ class TouchButtonAndBuzzer():
         except KeyboardInterrupt:
             GPIO.cleanup()
 
+######################################################################
+# Vibration
 import RPi.GPIO as GPIO
 import time
 class Vibration():
 
     def __init__(self):
         print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/vibration.py')
+        print('moving 1 second, stop 3 seconds')
         print('Press CTRL+C to exit')
 
         # define vibration pin
@@ -828,22 +975,27 @@ class Vibration():
         # Setup vibration pin to OUTPUT
         GPIO.setup(vibration_pin, GPIO.OUT)
 
-        # turn on vibration
-        GPIO.output(vibration_pin, GPIO.HIGH)
+        try:
+            while True:
+                # turn on vibration
+                GPIO.output(vibration_pin, GPIO.HIGH)
+                # wait a second
+                time.sleep(1)
 
-        # wait half a second
-        time.sleep(0.5)
+                # turn off vibration
+                GPIO.output(vibration_pin, GPIO.LOW)
+                # wait 3 seconds
+                time.sleep(3)
+        except KeyboardInterrupt:
+            # cleaup GPIO
+            GPIO.cleanup()
 
-        # turn off vibration
-        GPIO.output(vibration_pin, GPIO.LOW)
+################################################################################
+# Interface                                                                    #
+################################################################################
 
-        # cleaup GPIO
-        GPIO.cleanup()
-
-###############################################################################
-# Interface                                                                   #
-###############################################################################
-
+######################################################################
+# IR
 import RPi.GPIO as GPIO
 import time
 class IR:
@@ -918,6 +1070,33 @@ class IR:
         except KeyboardInterrupt:
             GPIO.cleanup()
 
+######################################################################
+# Crowtail - Moisture Sensor
+import RPi.GPIO as GPIO
+import time
+class MoistureSensor:
+
+    def __init__(self):
+        print('/home/pi/user/<User Name>/python/plant_water_monitoring.py')
+        print('Press CTRL+C to exit')
+
+        #GPIO SETUP
+        soil_pin = 19 # I2C port=3
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(soil_pin, GPIO.IN)
+
+        try:
+            while True:
+                mois = GPIO.input(soil_pin)
+                msg = 'filled moisture' if mois == 1 else 'thirsty'
+                print('Moisture Value[' +str(mois)+ '] ' + msg)
+                # wait 0.1 seconds before try again
+                time.sleep(0.1)
+        except KeyboardInterrupt:
+            GPIO.cleanup()
+
+######################################################################
+# Servo Motor
 import RPi.GPIO as GPIO
 import time
 class sg90:
@@ -967,6 +1146,8 @@ class sg90:
         except KeyboardInterrupt:
             self.cleanup()
 
+######################################################################
+# Servo Like Step Motor
 import math
 import RPi.GPIO as GPIO
 import time
@@ -1093,6 +1274,8 @@ class ServoMotor_LikeStep():
         print("moving stopped")
         self.close()
 
+######################################################################
+# Step Motor
 import math
 import RPi.GPIO as GPIO
 import time
@@ -1205,18 +1388,19 @@ class StepMotor():
         print("moving stopped")
         GPIO.cleanup()
 
-###############################################################################
-# main menu                                                                   #
-###############################################################################
+################################################################################
+# main menu                                                                    #
+################################################################################
 
 # menu item definition
-# sys, GPIO, GPIO-R, Category, H/W, Class Name
+# sys, GPIO, BCM, Category, H/W, Class Name
 menu_items = [
 # FIXME: How to test?
     [ 4, -1, -1, 'Disp', 'Screen driver / If you seen this, screen is working (^ ^)/'],
-    [ 5, -1, -1, 'Other', 'Cooling fan / How to control on software?'],
+    [ 5, -1, -1, 'Other', 'Cooling fan / How to control fan on software?'],
     [ 7, -1, -1, 'I/F', 'GPIO export'],
     [10, -1, -1, 'I/F', 'Breadboard'],
+    [16, -1,  3, 'I/F', 'I/O/ADC/I2C/UART expantion interface'],
 # TODO: How to get current setting values?
     [21, -1, -1, 'Other', 'PIR sensitivity adjustment'],
     [23, -1, -1, 'Other', 'Sound sensor sensitivity adjustment'],
@@ -1225,8 +1409,7 @@ menu_items = [
     [ 1, -1, -1, 'Input', 'Joystick', 'Joystick'],
     [19, -1, -1, 'Input', '4x4 button matrix', 'ButtonMatrix'],
     [24,  0, 17, 'Input', 'Touch sensor', 'TouchSensor'],
-    [26, -1, -1, 'Input', 'RC522 RFID induction module / Required MFRC522.py'],
-# NFC?
+    [26, -1, -1, 'Input', 'RC522 RFID induction module / Required MFRC522.py', 'RFIDReader'],
 
     [ 2, -1, -1, 'Disp', '4 Digits Segment LED', 'FourDigitSegment'],
     [ 8, 25, 26, 'Disp', 'GPIO indicate LED / only 26pin', 'GPIOLed'],
@@ -1247,10 +1430,10 @@ menu_items = [
     [40,  1, 18, 'Other', 'Touch Button And Buzzer', 'TouchButtonAndBuzzer'],
     [22,  2, 27, 'Other', 'Vibration motor', 'Vibration'],
 
-    [15, 28, 20, 'I/F', 'IR sensor interface', 'IR'],
-    [16, -1, -1, 'I/F', 'I/O/ADC/I2C/UART expantion interface / e.g. Crowtail Niusture'],
-    [17, 24, 19, 'I/F', '9g servo interface', 'sg90'], 
-    [34, 24, 19, 'I/F', '9g servo interface / Like a Step Motor?', 'ServoMotor_LikeStep'], 
+    [15, 28, 20, 'I/F', 'IR sensor interface / Remote Controller', 'IR'],
+    [51, 24, 19, 'I/F', 'Crowtail interface / Moisture', 'MoistureSensor'],
+    [17, 24, 19, 'I/F', '9g servo interface', 'sg90'],
+    [34, 24, 19, 'I/F', '9g servo interface / Like a Step Motor?', 'ServoMotor_LikeStep'],
     [18,  6, 25, 'I/F', 'Stepper motor interface', 'StepMotor'],
 
 # Camera
@@ -1277,11 +1460,11 @@ def default_menu():
     print('')
     print('CrowPi2 Sensor Tester')
     print('')
-    print('     \t G GPIO')
-    print('     \t   GR GPIO Real')
-    print('     \t        - NOT Implemented Test Function...')
+    print('     \tGP GPIO No.')
+    print('     \t   BC BCM No.')
+    print('     \t       [-] NOT Implemented Test Function...')
 
-    print(' Cat.\t G GR No Item')
+    print(' Cat.\tGP BC No Item')
     for item in menu_items:
         impl = '-' if len(item) == 5 else ' '
         gpio = '  ' if item[1] == -1 else str(item[1]).rjust(2, ' ')
@@ -1307,7 +1490,12 @@ def default_menu():
                 print('[' + item[3] + '] - ' + item[4])
                 # dynamic loading https://stackoverflow.com/questions/4821104/dynamic-instantiation-from-string-name-of-a-class-in-dynamically-imported-module/30941292#30941292
                 MyClass = getattr(importlib.import_module("test_sensors"), item[5])
+#                try:
                 instance = MyClass()
+#                except Exception as e:
+#                    print(e)
+#                    break
+
                 try:
                     instance.main() # force execute main method without confirm imeplemented
                 except AttributeError:
