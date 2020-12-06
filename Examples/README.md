@@ -7,15 +7,15 @@ CrowPi2 sensor test program. Basically merged from CrowPi1 examples. The main pu
 
 ### Setup before execute test program
 ![image](https://github.com/kensuke/CrowPi2/blob/main/Examples/test_sensors.jpg)
-+ Sensor Switch to "CONNECT SENSOR" left side. It's default setting.
-+ Connect Crowtail Moisture Sensor to SERVO port.
++ [6] Sensor Switch to "CONNECT SENSOR" left side. It's default setting.
++ [17] Connect Crowtail Moisture Sensor to SERVO port.
   + Water into Cup.
-+ OR Connect servo motor to SERVO port.
++ [17] OR Connect servo motor to SERVO port.
   + Moisture is working on connect to I2C port, but I2C port and other I2C program couldn't working same time.
-+ Connect step motor to STEP MOTOR port.
-+ Connect IR Receiver to IR Port.
++ [18] Connect step motor to STEP MOTOR port.
++ [15] Connect IR Receiver to IR Port.
   + Remote Controller.
-+ RFID Reader test required circle cards
++ [26] RFID Reader test required circle cards
   + And RFID Reader test needs MFRC522.py. If not found MFRC522.py, then automatically download, so needs internet connection.
 
 ## How to execute?
