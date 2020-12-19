@@ -2,6 +2,7 @@
 
 ### What's this?
 CrowPi2 sensor test program. Basically merged from CrowPi1 examples. The main purpose of this program, many sensors test on one source, no installation other packages.
++ Ref: https://www.kickstarter.com/projects/elecrow/crowpi2-steam-education-platformand-raspberry-pi-laptop/comments?comment=Q29tbWVudC0zMDgyNDA4MA%3D%3D
 + https://github.com/Elecrow-RD/CrowPi/tree/master/Examples
 + /usr/share/code/project
 
@@ -60,3 +61,23 @@ reboot CrowPi2
   + refactor read-eval-print-loop
   + describe test description
   + GUI?
+  
+  
+# README piiio.py
+
+### What's this?
+GPIO GUI Test tool using Python tkinter.
+
+
+# Few Tips for developer
+
+## Initial Setup
+- Change Display Resolution
+- Install VSCode
+
+## Source Code Location
+- /usr/share/code/project
+  - Ref: https://github.com/Elecrow-RD/CrowPi2/issues/12
+
+- Online Course - /usr/share/.user/course/
+  - Ref: https://www.kickstarter.com/projects/elecrow/crowpi2-steam-education-platformand-raspberry-pi-laptop/comments?comment=Q29tbWVudC0zMDk1OTAwNA%3D%3D
