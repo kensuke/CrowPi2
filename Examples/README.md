@@ -1,4 +1,13 @@
-# README test_sensors.py
+# Table of Contents
+- 1 [README test_sensors.py](#readme-test_sensorspy)
+- 2 [README piiio.py](#readme-piiiopy)
+- 3 [A Few Tips for Developer](#a-few-tips-for-developer)
+
+
+____
+
+
+# 1) README test_sensors.py
 
 ### What's this?
 CrowPi2 sensor test program. Basically merged from CrowPi1 examples. The main purpose of this program, many sensors test on one source, no installation other packages.
@@ -61,15 +70,21 @@ reboot CrowPi2
   + refactor read-eval-print-loop
   + describe test description
   + GUI?
+
+
+____
+
   
-  
-# README piiio.py
+# 2) README piiio.py
 
 ### What's this?
 GPIO GUI Test tool using Python tkinter.
 
 
-# Few Tips for developer
+____
+
+
+# 3) A Few Tips for Developer
 
 ## Initial Setup
 - Change Display Resolution
