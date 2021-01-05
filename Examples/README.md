@@ -1,6 +1,7 @@
 # Table of Contents
 - [README test_sensors.py](#readme-test_sensorspy)
 - [README piiio.py](#readme-piiiopy)
+- [README rgb8x8editor.py](#readme-rgb8x8editorpy)
 - [A Few Tips for Developer](#a-few-tips-for-developer)
 
 
@@ -80,6 +81,25 @@ ____
 ### What's this?
 GPIO GUI Test tool using Python tkinter.
 
+## How to execute?
+~~~~
+python3 piiio.py
+~~~~
+
+
+____
+
+
+# README rgb8x8editor.py
+
+### What's this?
+RGB Matrix Editor
+
+## How to execute?
+~~~~
+sudo python3 rgb8x8editor.py
+~~~~
+
 
 ____
 
@@ -88,7 +108,22 @@ ____
 
 ## Initial Setup
 - Change Display Resolution
-- Install VSCode
+  - Menu - Preferences - Appearance Settings
+    - Menu Bar - Size - Large
+    - System - Font - Source Code Pro? / Regular / 14?
+    - Defaults - For menium screens - Set Defaults
+- Change Password
+  - passwd
+- Disabled Crowpi2 App on Startup
+- Install Visual Studio Code (for Linux .deb ARM)
+  - https://code.visualstudio.com/download
+
+### For Japanese
+~~~~
+sudo apt install ibus
+sudo apt install ibus-mozc
+reboot
+~~~~
 
 ## Source Code Location
 - /usr/share/code/project
