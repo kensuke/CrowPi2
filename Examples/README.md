@@ -4,9 +4,7 @@
 - [README rgb8x8editor.py](#readme-rgb8x8editorpy)
 - [A Few Tips for Developer](#a-few-tips-for-developer)
 
-
 ____
-
 
 # README test_sensors.py
 
@@ -57,11 +55,8 @@ reboot CrowPi2
   + gets adjuster setting value
 
 + Basic Hardware
-  + camera
-  + mic, speaker, earphone
-  + lan
-  + wlan
-  + bt
+  + camera / mic / speaker / earphone
+  + lan / wlan / bt / 2.5GW
   + usb
   + sd card
 
@@ -72,11 +67,12 @@ reboot CrowPi2
   + refactor read-eval-print-loop
   + describe test description
   + GUI?
-
+<br />
+<br />
+<br />
 
 ____
 
-  
 # README piiio.py
 
 ### What's this?
@@ -86,10 +82,11 @@ GPIO GUI Test tool using Python tkinter.
 ~~~~
 python3 piiio.py
 ~~~~
-
+<br />
+<br />
+<br />
 
 ____
-
 
 # README rgb8x8editor.py
 
@@ -100,10 +97,11 @@ RGB Matrix Editor
 ~~~~
 sudo python3 rgb8x8editor.py
 ~~~~
-
+<br />
+<br />
+<br />
 
 ____
-
 
 # A Few Tips for Developer
 
