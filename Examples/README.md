@@ -18,6 +18,7 @@ CrowPi2 sensor test program. Basically merged from CrowPi1 examples. The main pu
 
 ### Setup before execute test program
 ![image](https://github.com/kensuke/CrowPi2/blob/main/Examples/test_sensors.jpg)
+(pic number refer from https://ksr-ugc.imgix.net/assets/029/412/859/f155bd1a92f378ed03cfb3872cf60341_original.jpg?ixlib=rb-2.1.0&auto=compress%2Cformat&q=1&w=680&fit=max&v=1591784774&frame=1&s=4f051911c4150d019b7255b3c848f259)
 + [6] Sensor Switch to "CONNECT SENSOR" left side. It's default setting.
 + [17] Connect Crowtail Moisture Sensor to SERVO port.
   + Water into Cup.
