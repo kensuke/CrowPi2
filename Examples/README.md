@@ -75,6 +75,8 @@ ____
 
 # README piiio.py
 
+## 2021/1 WORKING NOW! USE CAREFULLY!!
+
 ### What's this?
 GPIO GUI Test tool using Python tkinter.
 
@@ -90,13 +92,21 @@ ____
 
 # README rgb8x8editor.py
 
+## 2021/1 WORKING NOW! USE CAREFULLY!!
+
 ### What's this?
 RGB Matrix Editor
+
+add: 7 Seg support (I didn't planning 7 Seg implementation ^_^)
 
 ## How to execute?
 ~~~~
 sudo python3 rgb8x8editor.py
 ~~~~
+
+## TODO?
+other H/W support? (motor, vibration, ...)
+
 <br />
 <br />
 <br />
