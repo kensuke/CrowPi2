@@ -56,7 +56,7 @@ reboot CrowPi2
 
 + Basic Hardware
   + camera / mic / speaker / earphone
-  + lan / wlan / bt / 2.5GW
+  + lan / wlan / bt / 2.4GW Keyboard & Mouse
   + usb
   + sd card
 
