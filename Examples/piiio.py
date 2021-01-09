@@ -1,13 +1,14 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
 
 import tkinter as tk
 import tkinter.font as tkfont
 #import tkinter.tix as tix # for balloon (as tooltip) # needs py3.9...
 import RPi.GPIO as GPIO
 
-
+'''
 def check_const(name, defval, realval):
     print(name + '\t' + str(defval) + '\t' + str(realval) + '\t' + str(defval == realval))
-
 
 check_const('HIGH', 1, GPIO.HIGH)
 check_const('LOW', 0, GPIO.LOW)
@@ -32,7 +33,7 @@ check_const('PUD_UP', 22, GPIO.PUD_UP)
 check_const('RISING', 31, GPIO.RISING)
 check_const('FALLING', 32, GPIO.FALLING)
 check_const('BOTH', 33, GPIO.BOTH)
-
+'''
 
 ################################################################################
 # DATA Definition                                                              #
@@ -165,8 +166,8 @@ def create_frame(parent, pin):
 
 # vertical button: https://stackoverflow.com/questions/38008389/is-it-possible-to-have-a-vertical-oriented-button-in-tkinter
     def button_pressed(event):
-        print('button['+str(pin[0])+'] inout['+inout.get()+'] in['+in_pud.get()+'] out['+out_hl.get()+']')
-        print(pin)
+        #print('button['+str(pin[0])+'] inout['+inout.get()+'] in['+in_pud.get()+'] out['+out_hl.get()+']')
+        #print(pin)
 
         # open or close
         GPIO.setmode(GPIO.BCM)
@@ -226,7 +227,7 @@ def detect_pin_function():
     GPIO.cleanup() # for GPIO.setmode(GPIO.BCM)
 
 def main():
-    detect_pin_function()
+    #detect_pin_function()
     root.title('CrowPi2 GPIO Tester')
     root.protocol('WM_DELETE_WINDOW', on_close)
 
