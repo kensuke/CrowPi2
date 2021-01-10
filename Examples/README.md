@@ -95,9 +95,10 @@ ____
 ## 2021/1 WORKING NOW! USE CAREFULLY!!
 
 ### What's this?
-RGB Matrix Editor
+RGB Matrix Editor (in first..)
 
-add: 7 Seg support (I didn't planning 7 Seg implementation ^_^)
+add1: 7 Seg support (I didn't planning 7 Seg implementation ^_^)
+add2: Vibration
 
 ## How to execute?
 ~~~~
@@ -105,7 +106,7 @@ sudo python3 rgb8x8editor.py
 ~~~~
 
 ## TODO?
-other H/W support? (motor, vibration, ...)
+other H/W support? (motor, sensors status, ...)
 
 <br />
 <br />
