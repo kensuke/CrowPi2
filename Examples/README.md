@@ -78,7 +78,7 @@ ____
 ## 2021/1 WORKING NOW! USE CAREFULLY!!
 
 ### What's this?
-GPIO GUI Test tool using Python tkinter.
+GPIO GUI Test tool using Python tkinter. (I didn't use Python usually, so this and other *.py is for my Python learning project.)
 
 ## How to execute?
 ~~~~
@@ -97,8 +97,8 @@ ____
 ### What's this?
 RGB Matrix Editor (in first..)
 
-add1: 7 Seg support (I didn't planning 7 Seg implementation ^_^)
-add2: Vibration
+1. + 7 Seg support (I didn't planning 7 Seg implementation ^_^)
+2. + Vibration
 
 ## How to execute?
 ~~~~
