@@ -97,8 +97,8 @@ ____
 ### What's this?
 RGB Matrix Editor (in first..)
 
-1. + 7 Seg support (I didn't planning 7 Seg implementation ^_^)
-2. + Vibration
+1. add: 7 Seg support (I didn't planning 7 Seg implementation ^_^)
+2. add: Vibration
 
 ## How to execute?
 ~~~~
