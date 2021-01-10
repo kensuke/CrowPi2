@@ -80,6 +80,14 @@ class RGBMatrix:
     def fill(self, col):
         self.colorWipe(col, 10)
 
+    def rand(self):
+        l = list(range(self.strip.numPixels()))
+        random.shuffle(l)
+        for i in l:
+            self.strip.setPixelColor(i, Color(random.randint(10, 250), random.randint(10, 250), random.randint(10, 250)))
+            self.strip.show()
+            time.sleep(0.01)
+
     def dot(self, num, col):
         self.strip.setPixelColor(int(num), col)
         self.strip.show()
@@ -94,6 +102,7 @@ class RGBMatrixS: # Skelton
     def __init__(self): pass
     def clear(self): print('RGBMatrixS.clear()')
     def fill(self, col): print('RGBMatrixS.fill(col='+str(col)+')')
+    def rand(self): print('RGBMatrixS.rand()')
     def dot(self, num, col): print('RGBMatrixS.dot(num='+str(num)+', col='+str(col)+')')
     def show_template(self, num, col): print('RGBMatrixS.show_template(num='+str(num)+', col='+str(col)+')')
 
@@ -102,8 +111,9 @@ class RGBMatrixS: # Skelton
 # Thread https://qiita.com/kotai2003/items/db7c846e0d4e2d6d6d45
 class TouchSensor():
 
-    def __init__(self, _rgb):
+    def __init__(self, _rgb, _seg):
         self.rgb = _rgb
+        self.seg = _seg
 
         # define touch pin
         self.touch_pin = 17
@@ -128,6 +138,8 @@ class TouchSensor():
                 if self.started.is_set() == True:
                     if(GPIO.input(self.touch_pin)):
                         self.rgb.clear()
+                        self.seg.clear()
+                        self.seg.write_display()
                     time.sleep(0.1)
                 else:
                     self.started.wait()
@@ -275,9 +287,10 @@ rgb = RGBMatrixS()
 but = ButtonMatrixS(rgb)
 '''
 
-touch = TouchSensor(rgb)
 seg = SevenSegment.SevenSegment(address=0x70)
 seg.begin()
+
+touch = TouchSensor(rgb, seg)
 
 color = tk.StringVar(value='RND')
 r_var_scale = tk.IntVar()
@@ -305,6 +318,27 @@ def get_color():
         r, g, b = r_var_scale.get(), g_var_scale.get(), b_var_scale.get()
     return Color(r, g, b)
 
+# print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/vibration.py')
+def vib():
+    # define vibration pin
+    vibration_pin = 27
+    # Set board mode to GPIO.BCM
+    GPIO.setmode(GPIO.BCM)
+    # Setup vibration pin to OUTPUT
+    GPIO.setup(vibration_pin, GPIO.OUT)
+
+    # turn on vibration
+    GPIO.output(vibration_pin, GPIO.HIGH)
+    # wait a second
+    time.sleep(1)
+
+    # turn off vibration
+    GPIO.output(vibration_pin, GPIO.LOW)
+
+    # cleaup GPIO
+    #GPIO.cleanup()
+
+
 '''
 　━　　━　　　━　　━　
 ┃　┃┃　┃：┃　┃┃　┃
@@ -313,46 +347,51 @@ def get_color():
 　━．　━．　　━．　━．
 
 '''
-
-# GUI builder
-#col 0     1
-# | 7 seg               | TOP
-# | 8x8 | sel | color c |
-# |     | rgb | scalex3 |
-# |     | rnd |         |
-# |     |    fill clear |
-#   LEFT  RIGHT
-def create_frame(frame):
-
-# TOP for 7seg
-    top = tk.Frame(frame, bd=2, relief=tk.SUNKEN)
-    top.grid(row=0, column=0, columnspan=2)
-
+def create_seven_seg_frame(top):
     # manipulate buffer dynamically
     # https://github.com/adafruit/Adafruit_Python_LED_Backpack/blob/master/Adafruit_LED_Backpack/SevenSegment.py
     def set_seven_seg(pos, mask, poi = False):
         pos = pos if pos < 2 else pos-1 #  fix pos 3 -> 2, 4 -> 3 (for colon[pos=2])
         pos = 0 if pos == 0 else pos*2  # conv pos 0-0, 1-2, 2-4, 3-6
         if poi:
-            seg.buffer[pos] |= (1 << 7)
+            mask = (1 << 7)
+            # Point Position x 0 4 6 # 2 = colon[:]
+            if pos == 0:
+                print('Unsupported This Position!! (maybe bug)')
+                return
+            elif pos == 2:
+                pos = 0
+
+        if seg.buffer[pos] & mask == 0:
+            seg.buffer[pos] |= mask
         else:
-            if seg.buffer[pos] & mask == 0:
-                seg.buffer[pos] |= mask
-            else:
-                seg.buffer[pos] ^= mask
+            seg.buffer[pos] ^= mask
         seg.write_display()
 
     def show_colon():
         if seg.buffer[2] & (1 << 7) == 0:
-            seg.buffer[2] |= (1 << 7) # ??
+            seg.buffer[2] |= (1 << 7)
         else:
-            seg.buffer[2] ^= (1 << 7) # ??
+            seg.buffer[2] ^= (1 << 7)
         seg.write_display()
 
-        # official code ;-)
-        #seg.buffer[4] |= 0x02
-        #seg.buffer[4] &= (~0x02) & 0xFF
-        #seg.write_display()
+    def fill_seg(rand = False):
+        seg.buffer[0] = 0xFF
+        seg.buffer[2] = 0xFF
+        seg.buffer[4] = 0xFF
+        seg.buffer[6] = 0xFF
+
+        if rand:
+            seg.buffer[0] ^= random.randint(0, 255)
+            seg.buffer[2] ^= random.randint(0, 255)
+            seg.buffer[4] ^= random.randint(0, 255)
+            seg.buffer[6] ^= random.randint(0, 255)
+
+        seg.write_display()
+
+    def clear_seg():
+        seg.clear()
+        seg.write_display()
 
     def create_seg_frame(fr, r, c):
         inner = tk.Frame(fr, bd=2, relief=tk.SUNKEN)
@@ -382,12 +421,42 @@ def create_frame(frame):
         button = tk.Button(inner, text='.', command=lambda: set_seven_seg(c, 0x00, True))
         button.grid(row=4, column=2)
 
-    dig0 = create_seg_frame(top, 0, 0)
-    dig1 = create_seg_frame(top, 0, 1)
-    colon = tk.Button(top, text=':', command=lambda: show_colon())
+    in_top = tk.Frame(top, bd=2, relief=tk.SUNKEN)
+    in_top.grid(row=0, column=0, columnspan=2)
+
+    dig0 = create_seg_frame(in_top, 0, 0)
+    dig1 = create_seg_frame(in_top, 0, 1)
+    colon = tk.Button(in_top, text=':', command=lambda: show_colon())
     colon.grid(row=0, column=2)
-    dig2 = create_seg_frame(top, 0, 3)
-    dig3 = create_seg_frame(top, 0, 4)
+    dig2 = create_seg_frame(in_top, 0, 3)
+    dig3 = create_seg_frame(in_top, 0, 4)
+
+    # command button
+    in_bot = tk.Frame(top, bd=2, relief=tk.SUNKEN)
+    in_bot.grid(row=1, column=0, columnspan=2)
+
+    button = tk.Button(in_bot, text='FILL', command=lambda: fill_seg())
+    button.grid(row=0, column=0)
+    button = tk.Button(in_bot, text='RAND', command=lambda: fill_seg(True))
+    button.grid(row=0, column=1)
+    button = tk.Button(in_bot, text='CLEAR', command=lambda: clear_seg())
+    button.grid(row=0, column=2)
+
+
+# GUI builder
+#col 0     1
+# | 7 seg               | TOP
+# | 8x8 | sel | color c |
+# |     | rgb | scalex3 |
+# |     | rnd |         |
+# |     |    fill clear |
+#   LEFT  RIGHT
+def create_frame(frame):
+
+# TOP for 7seg
+    top = tk.Frame(frame, bd=2, relief=tk.SUNKEN)
+    top.grid(row=0, column=0, columnspan=2)
+    create_seven_seg_frame(top)
 
 # LEFT
     # 8x8 button frame
@@ -458,8 +527,16 @@ def create_frame(frame):
 
     button = tk.Button(inframe3, text='FILL', command=lambda: rgb.fill(get_color()))
     button.grid(row=0, column=0)
-    button = tk.Button(inframe3, text='CLEAR', command=lambda: rgb.clear())
+    button = tk.Button(inframe3, text='RAND', command=lambda: rgb.rand())
     button.grid(row=0, column=1)
+    button = tk.Button(inframe3, text='CLEAR', command=lambda: rgb.clear())
+    button.grid(row=0, column=2)
+
+# sensors status area!?
+    topr = tk.Frame(frame, bd=2, relief=tk.SUNKEN)
+    topr.grid(row=0, column=2)
+    button = tk.Button(topr, text='Vib!', command=vib)
+    button.grid(row=0, column=0)
 
 # TODO:
 # buzzer?
