@@ -38,6 +38,67 @@ sudo python3 test_sensors.py
 + Q. Why python3?
 + A. python lib 'urllib.request' for auto donwload for RFID Reader test
 
+~~~~
+pi@raspberrypi:~/src/CrowPi2/Examples $ sudo python3 test_sensors.py 
+
+CrowPi2 Sensor Tester
+
+     	GP GPIO No.
+     	   BC BCM No.
+     	       [-] NOT Implemented Test Function...
+ Cat.	GP BC No Item
+ Disp	       4- Screen driver / If you seen this, screen is working (^ ^)/
+ Other	       5- Cooling fan / How to control fan on software?
+ I/F	       7- GPIO export
+ I/F	      10- Breadboard
+ I/F	    3 16- I/O/ADC/I2C/UART expantion interface
+ Other	      21- PIR sensitivity adjustment
+ Other	      23- Sound sensor sensitivity adjustment
+ Other	      28- LCD1602 brightness adjustment
+ Input	       1  Joystick
+ Input	      19  4x4 button matrix
+ Input	 0 17 24  Touch sensor
+ Input	      26  RC522 RFID induction module / Required MFRC522.py
+ Disp	       2  4 Digits Segment LED
+ Disp	25 26  8  GPIO indicate LED / only 26pin
+ Disp	      12  LCD1602
+ Disp	      25  8x8 RGB matrix / ** Required root privileges! **
+ Sensor	       9  DHT11 temperature and humidity sensor
+ Sensor	 3 22 11  Tilt sensor
+ Sensor	 4 23 13  PIR(Passive Infrared Ray) Motion sensor
+ Sensor	 5 24 14  Sound sensor
+ Sensor	      27  Light intensity sensor
+ Sensor	27 16 29  Ultrasonic sensor
+ Other	29 21  3  Relay
+ Other	       6- Raspberry Pi and PCBA connection switch
+ Other	 1 18 20  Buzzer
+ Other	 1 18 40  Touch Button And Buzzer
+ Other	 2 27 22  Vibration motor
+ I/F	28 20 15  IR sensor interface / Remote Controller
+ I/F	24 19 51  Crowtail interface / Moisture
+ I/F	24 19 17  9g servo interface
+ I/F	24 19 34  9g servo interface / Like a Step Motor?
+ I/F	 6 25 18  Stepper motor interface
+ System	      99  Execute ALL!
+ System	       0  Exit this menu (or Ctrl+C)
+               |
+Input No       |
+19         <-- Input This No
+
+********** ********** ********** ********** <-- Test Start
+[Input] - 4x4 button matrix
+/usr/share/code/project/Calculator/Calculator.py
+Author : original author stenobot
+Original Author Github: https://github.com/stenobot/SoundMatrixPi
+Press CTRL+C to exit
+button 7 pressed
+button 5 pressed
+button 3 pressed
+^Cpi@raspberrypi:~/src/CrowPi2/Examples $    <-- Ctrl+C to Exit
+
+~~~~
+
+
 ### BUG?
 + LCD
 ~~~~
