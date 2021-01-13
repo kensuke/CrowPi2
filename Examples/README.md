@@ -28,7 +28,7 @@ CrowPi2 sensor test program. Basically merged from CrowPi1 examples. The main pu
 + [26] RFID Reader test required circle cards
   + And RFID Reader test needs MFRC522.py. If not found MFRC522.py, then automatically download, so needs internet connection.
 
-## How to execute?
+### How to execute?
 ~~~~
 sudo python3 test_sensors.py
 ~~~~
@@ -141,10 +141,17 @@ ____
 ### What's this?
 GPIO GUI Test tool using Python tkinter. (I didn't use Python usually, so this and other *.py is for my Python learning project.)
 
-## How to execute?
+### How to execute?
 ~~~~
 python3 piiio.py
 ~~~~
+
+### Python tkineter resources
++ https://tkdocs.com/tutorial/index.html
++ https://tcl.tk/man/tcl8.6/TkCmd/contents.htm
++ https://cercopes-z.com/Python/stdlib-tkinter-widget-py.html#list-widgets
++ https://docs.python.org/ja/3.7/library/tk.html
++ http://www.interq.or.jp/japan/s-imai/tcltk/tkbasic.html
 <br />
 <br />
 <br />
@@ -161,12 +168,12 @@ RGB Matrix Editor (in first..)
 1. add: 7 Seg support (I didn't planning 7 Seg implementation ^_^)
 2. add: Vibration
 
-## How to execute?
+### How to execute?
 ~~~~
 sudo python3 rgb8x8editor.py
 ~~~~
 
-## TODO?
+### TODO?
 other H/W support? (motor, sensors status, ...)
 
 <br />
