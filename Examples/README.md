@@ -173,6 +173,9 @@ RGB Matrix Editor (in first..)
 sudo python3 rgb8x8editor.py
 ~~~~
 
+### BUG
+multi threads controll. App didn't close when clicked [x] button, try type Ctrl+C in terminal for force exit.
+
 ### TODO?
 other H/W support? (motor, sensors status, ...)
 
