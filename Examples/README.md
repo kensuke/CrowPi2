@@ -165,6 +165,9 @@ ____
 ### What's this?
 RGB Matrix Editor (in first..),
 
+![image](https://github.com/kensuke/CrowPi2/blob/main/Examples/rgb_v1.jpg)
+(first version)
+
 1. add: 7 Seg support (I didn't planning 7 Seg implementation ^_^)
 2. add: Vibration
 3. add: Input Sensors - Motion, Sound, IR (remote controller), Temperature, Tilt, Ultrasonic distance, Light, Joystick and RFIDReader. almost complete.
@@ -173,6 +176,8 @@ RGB Matrix Editor (in first..),
 
 become All Sensors on One App.
 
+![image](https://github.com/kensuke/CrowPi2/blob/main/Examples/rgb_latest.jpg)
+
 ### How to execute?
 
 ~~~~
@@ -180,14 +185,22 @@ sudo python3 rgb8x8editor.py
 ~~~~
 
 ### BUG
-Couldn't controll multi threads. App didn't close when clicked [x] button, try type Ctrl+C in terminal for force exit.
+
+1. Couldn't controll multi threads. App didn't close when clicked [x] button, try type Ctrl+C in terminal for force exit.
+2. LCD
+3. IR detect timing
+4. Temperature thread
+5. Ultrasonic thread
+6. RFID detect timing
+7. and other things..
 
 ### TODO?
 other H/W support? <s>(motor, sensors status, ...)</s> ALMOST COMPLETED roughly. Let's next step,
 
-1. Refactor python source code (--> I'm newbie of python programming)
-2. Brush up GUI (--> tkinter is a little difficult)
-3. Support for Crowtail devices
+1. Bug fix
+2. Refactor python source code (--> I'm newbie of python programming)
+3. Brush up GUI (--> tkinter is a little difficult)
+4. Support for Crowtail devices
 
 <br />
 <br />
