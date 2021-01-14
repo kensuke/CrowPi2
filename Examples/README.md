@@ -163,21 +163,31 @@ ____
 ## 2021/1 WORKING NOW! USE CAREFULLY!!
 
 ### What's this?
-RGB Matrix Editor (in first..)
+RGB Matrix Editor (in first..),
 
 1. add: 7 Seg support (I didn't planning 7 Seg implementation ^_^)
 2. add: Vibration
+3. add: Input Sensors - Motion, Sound, IR (remote controller), Temperature, Tilt, Ultrasonic distance, Light, Joystick and RFIDReader. almost complete.
+4. add: Output Components - Buzzer, Relay, LCD, Servo Motor and Step Motor.
+    1. But, I don't know 'Relay'.
+
+become All Sensors on One App.
 
 ### How to execute?
+
 ~~~~
 sudo python3 rgb8x8editor.py
 ~~~~
 
 ### BUG
-multi threads controll. App didn't close when clicked [x] button, try type Ctrl+C in terminal for force exit.
+Couldn't controll multi threads. App didn't close when clicked [x] button, try type Ctrl+C in terminal for force exit.
 
 ### TODO?
-other H/W support? (motor, sensors status, ...)
+other H/W support? <s>(motor, sensors status, ...)</s> ALMOST COMPLETED roughly. Let's next step,
+
+1. Refactor python source code (--> I'm newbie of python programming)
+2. Brush up GUI (--> tkinter is a little difficult)
+3. Support for Crowtail devices
 
 <br />
 <br />
