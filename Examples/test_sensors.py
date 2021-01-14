@@ -1169,13 +1169,13 @@ class ServoMotor_LikeStep():
         self.interval = 0.010
 
         # Declare pins as output
-        GPIO.setup(self.pin_A,GPIO.OUT)
-        GPIO.setup(self.pin_B,GPIO.OUT)
-        GPIO.setup(self.pin_C,GPIO.OUT)
+        #GPIO.setup(self.pin_A,GPIO.OUT)
+        #GPIO.setup(self.pin_B,GPIO.OUT)
+        #GPIO.setup(self.pin_C,GPIO.OUT)
         GPIO.setup(self.pin_D,GPIO.OUT)
-        GPIO.output(self.pin_A, False)
-        GPIO.output(self.pin_B, False)
-        GPIO.output(self.pin_C, False)
+        #GPIO.output(self.pin_A, False)
+        #GPIO.output(self.pin_B, False)
+        #GPIO.output(self.pin_C, False)
         GPIO.output(self.pin_D, False)
 
     def Step1(self):
@@ -1185,46 +1185,46 @@ class ServoMotor_LikeStep():
 
     def Step2(self):
         GPIO.output(self.pin_D, True)
-        GPIO.output(self.pin_C, True)
+        #GPIO.output(self.pin_C, True)
         time.sleep(self.interval)
         GPIO.output(self.pin_D, False)
-        GPIO.output(self.pin_C, False)
+        #GPIO.output(self.pin_C, False)
 
     def Step3(self):
-        GPIO.output(self.pin_C, True)
+        #GPIO.output(self.pin_C, True)
         time.sleep(self.interval)
-        GPIO.output(self.pin_C, False)
+        #GPIO.output(self.pin_C, False)
 
     def Step4(self):
-        GPIO.output(self.pin_B, True)
-        GPIO.output(self.pin_C, True)
+        #GPIO.output(self.pin_B, True)
+        #GPIO.output(self.pin_C, True)
         time.sleep(self.interval)
-        GPIO.output(self.pin_B, False)
-        GPIO.output(self.pin_C, False)
+        #GPIO.output(self.pin_B, False)
+        #GPIO.output(self.pin_C, False)
 
     def Step5(self):
-        GPIO.output(self.pin_B, True)
+        #GPIO.output(self.pin_B, True)
         time.sleep(self.interval)
-        GPIO.output(self.pin_B, False)
+        #GPIO.output(self.pin_B, False)
 
     def Step6(self):
-        GPIO.output(self.pin_A, True)
-        GPIO.output(self.pin_B, True)
+        #GPIO.output(self.pin_A, True)
+        #GPIO.output(self.pin_B, True)
         time.sleep(self.interval)
-        GPIO.output(self.pin_A, False)
-        GPIO.output(self.pin_B, False)
+        #GPIO.output(self.pin_A, False)
+        #GPIO.output(self.pin_B, False)
 
     def Step7(self):
-        GPIO.output(self.pin_A, True)
+        #GPIO.output(self.pin_A, True)
         time.sleep(self.interval)
-        GPIO.output(self.pin_A, False)
+        #GPIO.output(self.pin_A, False)
 
     def Step8(self):
         GPIO.output(self.pin_D, True)
-        GPIO.output(self.pin_A, True)
+        #GPIO.output(self.pin_A, True)
         time.sleep(self.interval)
-        GPIO.output(self.pin_D, False)
-        GPIO.output(self.pin_A, False)
+        #GPIO.output(self.pin_D, False)
+        #GPIO.output(self.pin_A, False)
 
     def turn(self,count):
         for i in range (int(count)):
