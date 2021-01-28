@@ -21,6 +21,7 @@ if getattr(platform.uname(), 'node') == 'raspberrypi':
     import Adafruit_CharLCD as LCD
     import Adafruit_DHT # Temperature
     from Adafruit_LED_Backpack import SevenSegment
+    from pirc522 import RFID
     from rpi_ws281x import PixelStrip, Color # RGBMatrix
     import smbus  # LightSensor
     import spidev # ButtonMatrix, Joystick
@@ -185,7 +186,7 @@ class TouchSensor():
 # print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/light_sensor.py')
 # print('/usr/share/code/project/Memory/Memory.py') # for Joystick
 # print('https://github.com/Elecrow-RD/CrowPi/tree/master/Examples/RFID/Read.py & MFRC522.py')
-
+#   RFID test replaced to print('/home/pi/user/<user name>/python/using_RC522_RFID_module.py')
 # Thread https://qiita.com/kotai2003/items/db7c846e0d4e2d6d6d45
 class InputSensors():
 
@@ -260,6 +261,7 @@ class InputSensors():
         self.ONE_TIME_LOW_RES_MODE = 0x23
 
         self.MIFAREReader = None
+        self.rdr = None
 
     def _set_label(self, _mot, _snd, _ir, _temp, _tilt, _son, _lig, _toc, _rfid):
         self.mot = _mot
@@ -419,7 +421,7 @@ class InputSensors():
         data = self.bus.read_i2c_block_data(self.DEVICE,self.ONE_TIME_HIGH_RES_MODE_1)
         return '{0:0.2f}'.format(self.convertToNumber(data))
 
-    def detect_rfid(self):
+    def _detect_rfid_obsolete(self):
         if self.MIFAREReader is None:
             # https://qiita.com/yuukiclass/items/88e9ac6c5a3b5ab56cc4
             try:
@@ -472,6 +474,25 @@ class InputSensors():
             return 'OK ' + uidstr
         else:
             return 'on Err Auth ' + uidstr
+
+    # TODO: thread
+    def detect_rfid(self):
+        if self.rdr is None:
+            self.rdr = RFID()
+        util = self.rdr.util()
+        # Wait for tag
+        self.rdr.wait_for_tag()
+        # Request tag
+        (error, data) = self.rdr.request()
+        if error:
+            return 'on Err ' + str(error)
+
+        (error, uid) = self.rdr.anticoll()
+        if error:
+            return 'on Err ' + str(error)
+
+        uidstr = ("[%s,%s,%s,%s]" % (str(uid[0]), str(uid[1]), str(uid[2]), str(uid[3])))
+        return 'OK ' + uidstr
 
     def _main_func(self):
         try:
@@ -1141,7 +1162,7 @@ def create_sensor_frame(top):
     son = create_sensor_label('Sonic')
     lig = create_sensor_label('Light')
     toc = create_sensor_label('Touch')
-    rfid= create_sensor_label('RFID')
+    rfid= create_sensor_label('RFID', False) # bacause main thread stopped without RFID tag
 
     def dummy_func_for_default_checked(): # TODO: What's This!?
         mot[0].get()
@@ -1395,7 +1416,6 @@ def create_frame(frame):
 # TODO:
 # code area
 # 8*8 Dot Picture Save & Load
-#class RFIDReader():
 
 def main():
     root.title('CrowPi2 RGB Matrix Editor')
