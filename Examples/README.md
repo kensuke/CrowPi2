@@ -26,7 +26,8 @@ CrowPi2 sensor test program. Basically merged from CrowPi1 examples. The main pu
 + [15] Connect IR Receiver to IR Port.
   + Remote Controller.
 + [26] RFID Reader test required circle cards
-  + And RFID Reader test needs MFRC522.py. If not found MFRC522.py, then automatically download, so needs internet connection.
+  + <s>And RFID Reader test needs MFRC522.py. If not found MFRC522.py, then automatically download, so needs internet connection.</s>
+  + Updated! RFID library replaced MFRC522(external file) to pirc522(pre-installed)
 
 ### How to execute?
 ~~~~
@@ -191,7 +192,7 @@ sudo python3 rgb8x8editor.py
 3. IR detect timing
 4. Temperature thread
 5. Ultrasonic thread
-6. RFID detect timing
+6. <s>RFID detect timing</s>RFID thread
 7. and other things..
 
 ### TODO?
